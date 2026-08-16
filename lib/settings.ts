@@ -77,7 +77,15 @@ export async function getSettings(): Promise<Record<SettingKey, string>> {
   if (settingsCache && now - settingsCacheTime < SETTINGS_CACHE_TTL) {
     return settingsCache;
   }
-  const rows = await prisma.setting.findMany();
+  let rows: { key: string; value: string }[] = [];
+  try {
+    rows = await prisma.setting.findMany();
+  } catch {
+    // DB unavailable during build time — return defaults
+    const defaults = {} as Record<SettingKey, string>;
+    for (const k of SETTING_KEYS) defaults[k] = "";
+    return defaults;
+  }
   const map = Object.fromEntries(rows.map((r) => [r.key, r.value]));
   const out = {} as Record<SettingKey, string>;
   for (const k of SETTING_KEYS) out[k] = map[k] ?? "";
