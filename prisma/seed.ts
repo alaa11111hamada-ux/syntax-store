@@ -1,18 +1,16 @@
 import "dotenv/config";
 import bcrypt from "bcryptjs";
 import { PrismaClient } from "@prisma/client";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaPg } from "@prisma/adapter-pg";
 
-// حساب الأدمن — من .env لو موجود، وإلا الافتراضي (غيّر كلمة السر في الإنتاج!)
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@syntax.eg";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "Admin@12345";
 
-const adapter = new PrismaBetterSqlite3({
-  url: process.env.DATABASE_URL ?? "file:./prisma/dev.db",
+const adapter = new PrismaPg({
+  connectionString: process.env.DATABASE_URL!,
 });
 const prisma = new PrismaClient({ adapter });
 
-// منتجات تجريبية — مزيج رقمي وملموس
 const products = [
   {
     slug: "course-fullstack",
@@ -22,7 +20,6 @@ const products = [
       "كورس شامل يمشي معاك خطوة بخطوة من أساسيات الويب لحد ما تبني وتنشر مشاريع كاملة. يشمل تمارين، مشاريع، وشهادة إتمام.",
     priceCents: 79900,
     compareAtCents: 149900,
-
     images: JSON.stringify(["/products/course-fullstack.svg"]),
     featured: true,
   },
@@ -34,7 +31,6 @@ const products = [
       "دليل عملي (PDF) بيشرح إزاي تبدأ شغل حر، تظبط بروفايلك، وتجيب أول عميل — بأمثلة من السوق المصري.",
     priceCents: 14900,
     compareAtCents: 24900,
-
     images: JSON.stringify(["/products/ebook-freelance.svg"]),
     featured: true,
   },
@@ -46,7 +42,6 @@ const products = [
       "نوتة عملية بغلاف صلب وورق فاخر، مصممة لملاحظات الأكواد والأفكار. مقاس A5، 200 صفحة.",
     priceCents: 18000,
     compareAtCents: null,
-
     images: JSON.stringify(["/products/notebook-dev.svg"]),
     featured: true,
   },
@@ -58,7 +53,6 @@ const products = [
       "تيشيرت قطن مريح بطبعة عالية الجودة. متوفر بمقاسات S / M / L / XL بألوان متعددة.",
     priceCents: 29900,
     compareAtCents: 39900,
-
     images: JSON.stringify(["/products/tshirt-code.svg"]),
     featured: true,
   },
@@ -70,7 +64,6 @@ const products = [
       "قالب بورتفوليو جاهز بتقنية Next.js + Tailwind، سهل التخصيص وجاهز للنشر. يشمل صفحات أعمال ومدونة وتواصل.",
     priceCents: 24900,
     compareAtCents: null,
-
     images: JSON.stringify(["/products/template-portfolio.svg"]),
     featured: true,
   },
@@ -82,7 +75,6 @@ const products = [
       "مج سيراميك بجودة عالية وطبعة ثابتة لا تبهت. سعة 350ml، آمن للميكروويف والغسالة.",
     priceCents: 12000,
     compareAtCents: 16000,
-
     images: JSON.stringify(["/products/mug-coffee.svg"]),
     featured: false,
   },
@@ -101,7 +93,6 @@ async function main() {
   const count = await prisma.product.count();
   console.log(`✅ Done. Total products: ${count}`);
 
-  // حساب الأدمن
   console.log("👤 Seeding admin...");
   const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 10);
   await prisma.user.upsert({

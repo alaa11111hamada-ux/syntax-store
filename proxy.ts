@@ -5,7 +5,7 @@ export const config = {
   matcher: ["/((?!api|_next/static|_next/image|favicon.ico|products/placeholder.svg).*)"],
 };
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // صفحات الأدمن والدخول والصيانة — تمرير دائمًا
@@ -14,7 +14,6 @@ export function middleware(request: NextRequest) {
   }
 
   // وضع الصيانة — يُفحص من cookies الموقّعة (Server-side only)
-  // يتم تعيين هذا الكوكي من server action عند تفعيل الصيانة
   const maintenance = request.cookies.get("maintenance_mode")?.value;
   if (maintenance === "signed:1") {
     const url = request.nextUrl.clone();
