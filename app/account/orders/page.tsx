@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import OrdersPageClient from "@/components/OrdersPageClient";
 
 export const metadata: Metadata = { title: "طلباتي — حسابي" };
@@ -26,7 +27,7 @@ export default async function OrdersPage({ searchParams }: Props) {
   const pageNum = Math.max(1, parseInt(page ?? "1", 10) || 1);
   const perPage = 10;
 
-  const where: Record<string, unknown> = { userId: user.id };
+  const where: Prisma.OrderWhereInput = { userId: user.id };
   if (active) where.status = active;
 
   const [orders, total] = await Promise.all([
