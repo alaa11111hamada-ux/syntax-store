@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
 import OrdersPageClient from "@/components/OrdersPageClient";
 
 export const metadata: Metadata = { title: "طلباتي — حسابي" };
@@ -27,23 +26,25 @@ export default async function OrdersPage({ searchParams }: Props) {
   const pageNum = Math.max(1, parseInt(page ?? "1", 10) || 1);
   const perPage = 10;
 
-  const where: Prisma.OrderWhereInput = { userId: user.id };
-  if (active) where.status = active;
+  const orders = await prisma.order.findMany({
+    where: active
+      ? { userId: user.id, status: active }
+      : { userId: user.id },
+    include: { items: true },
+    orderBy: { createdAt: "desc" },
+    skip: (pageNum - 1) * perPage,
+    take: perPage,
+  });
 
-  const [orders, total] = await Promise.all([
-    prisma.order.findMany({
-      where,
-      include: { items: true },
-      orderBy: { createdAt: "desc" },
-      skip: (pageNum - 1) * perPage,
-      take: perPage,
-    }),
-    prisma.order.count({ where }),
-  ]);
+  const total = await prisma.order.count({
+    where: active
+      ? { userId: user.id, status: active }
+      : { userId: user.id },
+  });
 
   const totalPages = Math.ceil(total / perPage);
 
-  const clientOrders = orders.map((o) => ({
+  const clientOrders = orders.map((o: (typeof orders)[number]) => ({
     id: o.id,
     orderNumber: o.orderNumber,
     status: o.status,

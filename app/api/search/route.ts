@@ -8,7 +8,8 @@ export async function GET(req: NextRequest) {
   const maxPrice = req.nextUrl.searchParams.get("maxPrice");
   const sort = req.nextUrl.searchParams.get("sort") ?? "";
 
-  const where: Record<string, unknown> = { active: true };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const where: any = { active: true };
 
   if (q && q.length >= 1) {
     where.OR = [
@@ -19,8 +20,8 @@ export async function GET(req: NextRequest) {
     ];
   }
 
-  if (minPrice) where.priceCents = { ...(where.priceCents as object || {}), gte: Number(minPrice) };
-  if (maxPrice) where.priceCents = { ...(where.priceCents as object || {}), lte: Number(maxPrice) };
+  if (minPrice) where.priceCents = { ...(where.priceCents || {}), gte: Number(minPrice) };
+  if (maxPrice) where.priceCents = { ...(where.priceCents || {}), lte: Number(maxPrice) };
 
   let orderBy: Record<string, string>[];
   switch (sort) {

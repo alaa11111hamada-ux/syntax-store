@@ -1,7 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
 import { OrderStatusBadge } from "@/components/OrderStatus";
 
 export const metadata: Metadata = { title: "التذاكر — لوحة التحكم" };
@@ -33,11 +32,8 @@ export default async function AdminTicketsPage({ searchParams }: Props) {
   const { status } = await searchParams;
   const active = status && ["open", "replied", "closed"].includes(status) ? status : "";
 
-  const where: Prisma.SupportTicketWhereInput = {};
-  if (active) where.status = active;
-
   const tickets = await prisma.supportTicket.findMany({
-    where,
+    where: active ? { status: active } : {},
     include: { user: { select: { name: true, email: true } } },
     orderBy: { createdAt: "desc" },
   });
