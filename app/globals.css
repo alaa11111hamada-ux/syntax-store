@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+/* ===== هوية سينتاكس — ثيم غامق + بنفسجي متدرّج ===== */
+@theme {
+  --color-brand-50: #f5f3ff;
+  --color-brand-100: #ede9fe;
+  --color-brand-200: #ddd6fe;
+  --color-brand-300: #c4b5fd;
+  --color-brand-400: #a78bfa;
+  --color-brand-500: #8b5cf6;
+  --color-brand-600: #7c3aed;
+  --color-brand-700: #6d28d9;
+  --color-brand-800: #5b21b6;
+  --color-brand-900: #4c1d95;
+
+  /* ألوان دلالية للثيم الغامق */
+  --color-bg: #09090f;
+  --color-surface: #14141d;
+  --color-surface-2: #1b1b28;
+  --color-line: #2a2a3a;
+  --color-fg: #ededf2;
+  --color-muted: #9a9aab;
+
+  --font-sans: var(--font-cairo), ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  --background: var(--color-bg);
+  --foreground: var(--color-fg);
+}
+
+html {
+  scroll-behavior: smooth;
+  background: var(--color-bg);
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* أرقام متساوية العرض للأسعار */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* نص بتدرّج بنفسجي (زي كلمة Builders في المرجع) */
+.text-gradient {
+  background: linear-gradient(100deg, #a78bfa 0%, #8b5cf6 45%, #c084fc 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* خلفية زر/عنصر بتدرّج البراند */
+.bg-brand-gradient {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+}
+.bg-brand-gradient:hover {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
+/* توهّج ناعم خلف عناصر الهيرو */
+.glow {
+  box-shadow: 0 0 80px -20px rgba(124, 58, 237, 0.45);
+}
+
+/* إخفاء شريط التمرير مع الحفاظ على التمرير */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

@@ -1,0 +1,298 @@
+// Prisma schema — منصة متجر + صفحة هبوط (صفر عمولة)
+// المرحلة ١: موديل المنتجات فقط. المراحل الجاية هنضيف Users / Orders ...
+// docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+/// المنتج الرقمي (PDF/كورس/ملف)
+model Product {
+  id             String   @id @default(cuid())
+  slug           String   @unique
+  name           String
+  shortDesc      String?
+  description    String   @default("")
+  priceCents     Int
+  compareAtCents Int?
+  currency       String   @default("EGP")
+  category       String   @default("")
+  subcategory    String   @default("") // التصنيف الفرعي
+  tags           String   @default("[]") // وسوم بصيغة JSON
+  images         String   @default("[]")
+  fileUrl        String? // الملف الرئيسي
+  fileName       String   @default("") // اسم الملف الظاهر للعميل
+  files          String   @default("[]") // ملفات إضافية [{name, url}] بصيغة JSON
+  version        Int      @default(1) // إصدار الملف
+  maxDownloads   Int      @default(0) // حد أقصى للتحميل (0 = غير محدود)
+  downloadCount  Int      @default(0)
+  relatedIds     String   @default("[]") // IDs منتجات مشابهة بصيغة JSON
+  featured       Boolean  @default(false)
+  active         Boolean  @default(true)
+  customFields   String   @default("{}") // حقول مخصصة JSON
+  bundleProducts String   @default("[]") // منتجات الحزمة [{productId, discountPercent}]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  reviews        Review[]
+  orderItems     OrderItem[]
+
+  @@index([active, featured])
+  @@index([category])
+  @@index([subcategory])
+  @@index([createdAt])
+  @@index([active, createdAt])
+}
+
+/// العميل/المستخدم (بأدوار: عميل أو أدمن)
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  phone        String?
+  passwordHash String
+  role         String   @default("customer") // "customer" | "admin" | "manager" | "accountant"
+  blocked      Boolean  @default(false) // محظور؟
+  avatar       String?  // صورة الملف الشخصي
+  creditCents  Int      @default(0) // رصيد مالي بالقروش
+  lastLoginAt  DateTime?
+  notes        String   @default("") // ملاحظات الأدمن على العميل
+  permissions  String   @default("[]") // صلاحيات الأدمن JSON ["products_view","orders_edit",...]
+  reviews      Review[]
+  orders       Order[]
+  notifications Notification[]
+  tickets      SupportTicket[]
+  orderComments OrderComment[]
+  pushSubscriptions PushSubscription[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([role])
+  @@index([createdAt])
+}
+
+/// الطلب — مرتبط بعميل مسجّل أو زائر (userId = null)
+model Order {
+  id            String      @id @default(cuid())
+  orderNumber   String      @unique
+  userId        String?
+  user          User?       @relation(fields: [userId], references: [id])
+  customerName  String
+  customerPhone String
+  customerEmail String?
+  address       String?
+  paymentMethod String // "cash" | "transfer"
+  status        String      @default("pending") // pending | confirmed | delivered | cancelled | returned
+  subtotalCents Int
+  totalCents    Int         @default(0)
+  proofImage    String?
+  note          String?
+  source        String?     // مصدر الطلب: "direct" | "referral" | "coupon" | "ad:facebook" ...
+  couponCode    String?     // الكوبون المستخدم
+  discountCents Int         @default(0) // مبلغ الخصم بالقروش
+  items         OrderItem[]
+  comments      OrderComment[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([status, createdAt])
+}
+
+/// إعدادات المتجر (مفتاح/قيمة) — البكسلات، العرض الإضافي، وأي إعداد مستقبلي
+model Setting {
+  key       String   @id
+  value     String   @default("")
+  updatedAt DateTime @updatedAt
+}
+
+/// عنصر داخل الطلب (نسخة ثابتة من بيانات المنتج وقت الشراء)
+model OrderItem {
+  id         String   @id @default(cuid())
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId  String?
+  product    Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  name       String
+  priceCents Int
+  qty        Int
+
+  @@index([orderId])
+  @@index([productId])
+  @@index([name])
+}
+model Review {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  rating    Int      @default(5) // 1-5 نجوم
+  comment   String   @default("")
+  images    String   @default("[]") // صور المراجعة بصيغة JSON
+  approved  Boolean  @default(false) // مراجعة معتمدة؟
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@index([productId])
+}
+
+/// كوبونات الخصم
+model Coupon {
+  id           String   @id @default(cuid())
+  code         String   @unique
+  discountType String   @default("percent") // "percent" | "fixed"
+  discountValue Int
+  minOrderCents Int     @default(0)
+  maxUses      Int      @default(0) // 0 = غير محدود
+  usedCount    Int      @default(0)
+  active       Boolean  @default(true)
+  expiresAt    DateTime?
+  productId    String?  // خاص بمنتج محدد (اختياري)
+  userId       String?  // خاص بعميل محدد (اختياري)
+  maxPerUser   Int      @default(0) // استخدامات لكل عميل (0 = غير محدود)
+  createdAt    DateTime @default(now())
+
+  @@index([code])
+  @@index([productId])
+  @@index([userId])
+}
+
+/// سجل النشاطات (Audit Log)
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String   // "create" | "update" | "delete" | "status_change"
+  entity    String   // "product" | "order" | "coupon" | "settings"
+  entityId  String?
+  details   String   @default("") // JSON تفاصيل إضافية
+  createdAt DateTime @default(now())
+
+  @@index([entity])
+  @@index([createdAt])
+}
+
+/// تعليقات الأدمن على الطلب (داخلية أو مرئية للعميل)
+model OrderComment {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  content   String
+  visible   Boolean  @default(false) // مرئي للعميل؟
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+}
+
+/// إشعارات داخلية (In-App)
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  type      String   @default("info") // "info" | "order" | "promo" | "system"
+  link      String?  // رابط إضافي
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+}
+
+/// تذاكر الدعم الفني
+model SupportTicket {
+  id          String   @id @default(cuid())
+  ticketNumber String  @unique // رقم التذكرة
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  subject     String
+  status      String   @default("open") // "open" | "replied" | "closed"
+  priority    String   @default("normal") // "low" | "normal" | "high" | "urgent"
+  category    String   @default("general") // "general" | "order" | "payment" | "technical"
+  messages    TicketMessage[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+/// رسائل داخل التذكرة
+model TicketMessage {
+  id        String   @id @default(cuid())
+  ticketId  String
+  ticket    SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId    String?  // null = رد النظام
+  content   String
+  attachment String? // مرفق
+  createdAt DateTime @default(now())
+
+  @@index([ticketId])
+}
+
+/// عروض Flash Sale
+model FlashSale {
+  id           String   @id @default(cuid())
+  productId    String
+  salePriceCents Int   // سعر العرض بالقروش
+  startsAt     DateTime
+  endsAt       DateTime
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  @@index([productId, startsAt, endsAt])
+}
+
+/// روابط التواصل الاجتماعي (مفتاح/قيمة)
+/// مخزنة في جدول Setting: social_facebook, social_instagram, social_twitter, social_tiktok, social_youtube, social_whatsapp
+
+// ===== المراحل المتبقية =====
+
+/// صور المراجعات
+/// مخزنة في حقل Review.images كـ JSON string "[]"
+
+/// اشتراكات Push Notifications
+model PushSubscription {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint    String
+  p256dh      String
+  auth        String
+  userAgent   String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+}
+
+/// إعدادات الفواتير والضرائب
+/// مخزنة في جدول Setting: tax_rate, tax_enabled, invoice_prefix, invoice_next_number
+
+/// الرسائل المرسلة (سجل للبريد الإلكتروني)
+model SentEmail {
+  id        String   @id @default(cuid())
+  to        String
+  subject   String
+  htmlBody  String
+  type      String   // "order_confirmation" | "status_update" | "delivery" | "gift_card" | "password_reset" | "welcome"
+  sentAt    DateTime @default(now())
+
+  @@index([type])
+  @@index([sentAt])
+}
+
+/// Rate Limiter — بيانات محفوظة بالقاعدة
+model RateLimit {
+  key      String   @id
+  count    Int      @default(1)
+  resetAt  DateTime
+}

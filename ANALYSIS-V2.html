@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تحليل شامل V2 — متجر سينتاكس</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#08080d;--s1:#101018;--s2:#181824;--bd:#252535;--fg:#e6e6f0;--mu:#7878a0;--brand:#8b5cf6;--bl:#a78bfa;--r:#ef4444;--o:#f97316;--y:#eab308;--g:#22c55e;--b:#3b82f6}
+body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);color:var(--fg);line-height:1.7}
+
+.hero{background:linear-gradient(135deg,#0f0525 0%,#080818 50%,#051020 100%);border-bottom:1px solid var(--bd);padding:2.5rem 2rem;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:-50%;width:200%;height:200%;background:radial-gradient(circle at 30% 50%,rgba(139,92,246,.07) 0%,transparent 50%),radial-gradient(circle at 70% 50%,rgba(59,130,246,.05) 0%,transparent 50%);animation:p 8s ease-in-out infinite}
+@keyframes p{0%,100%{opacity:.4}50%{opacity:1}}
+.hero h1{font-size:2.2rem;font-weight:800;position:relative;background:linear-gradient(135deg,var(--bl),var(--b));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{color:var(--mu);margin-top:.4rem;font-size:1rem;position:relative}
+.hero .d{color:var(--bl);font-size:.85rem;margin-top:.8rem;position:relative}
+
+.ct{max-width:1200px;margin:0 auto;padding:2rem 1.5rem}
+.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:2rem}
+.st{background:var(--s1);border:1px solid var(--bd);border-radius:1rem;padding:1.25rem;text-align:center;transition:transform .2s,border-color .2s}
+.st:hover{transform:translateY(-2px);border-color:var(--brand)}
+.st .n{font-size:2.2rem;font-weight:800;line-height:1}
+.st .l{color:var(--mu);font-size:.8rem;margin-top:.3rem}
+.st.cr .n{color:var(--r)}.st.hi .n{color:var(--o)}.st.md .n{color:var(--y)}.st.lo .n{color:var(--g)}.st.tl .n{color:var(--bl)}
+
+.sec{margin-bottom:2.5rem}
+.sh{display:flex;align-items:center;gap:.75rem;padding:1rem 1.5rem;background:var(--s1);border:1px solid var(--bd);border-radius:1rem 1rem 0 0;cursor:pointer;user-select:none;transition:background .2s}
+.sh:hover{background:var(--s2)}
+.sh .ic{font-size:1.4rem}
+.sh h2{font-size:1.1rem;font-weight:700;flex:1}
+.sh .bg{background:var(--brand);color:#fff;padding:.15rem .6rem;border-radius:999px;font-size:.75rem;font-weight:600}
+.sh .ch{transition:transform .3s;color:var(--mu)}
+.sh.op .ch{transform:rotate(180deg)}
+.sb{background:var(--s1);border:1px solid var(--bd);border-top:none;border-radius:0 0 1rem 1rem;overflow:hidden;max-height:0;transition:max-height .4s ease}
+.sb.op{max-height:90000px}
+
+.f{padding:1.25rem 1.5rem;border-bottom:1px solid var(--bd);transition:background .15s}
+.f:last-child{border-bottom:none}
+.f:hover{background:var(--s2)}
+.fh{display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem;flex-wrap:wrap}
+.fi{font-family:monospace;font-size:.7rem;color:var(--mu);background:var(--s2);padding:.12rem .45rem;border-radius:4px}
+.ft{font-weight:600;font-size:.9rem}
+.sb2{padding:.12rem .55rem;border-radius:999px;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.sc{background:rgba(239,68,68,.12);color:var(--r);border:1px solid rgba(239,68,68,.25)}
+.sh2{background:rgba(249,115,22,.12);color:var(--o);border:1px solid rgba(249,115,22,.25)}
+.sm{background:rgba(234,179,8,.12);color:var(--y);border:1px solid rgba(234,179,8,.25)}
+.sl{background:rgba(34,197,94,.12);color:var(--g);border:1px solid rgba(34,197,94,.25)}
+
+.fm{display:flex;gap:.75rem;margin-bottom:.4rem;flex-wrap:wrap}
+.mt{font-size:.7rem;color:var(--mu);background:rgba(255,255,255,.04);padding:.12rem .45rem;border-radius:4px}
+.fd{font-size:.85rem;color:var(--fg);margin-bottom:.4rem;line-height:1.8}
+.fx{font-size:.78rem;color:var(--mu);padding:.7rem;background:rgba(0,0,0,.3);border-radius:8px;margin-top:.4rem;border-right:3px solid var(--brand)}
+.fx strong{color:var(--bl)}
+
+.fl{display:flex;gap:.5rem;margin-bottom:2rem;flex-wrap:wrap}
+.fb{padding:.45rem .9rem;border:1px solid var(--bd);border-radius:999px;background:var(--s1);color:var(--mu);cursor:pointer;font-size:.82rem;transition:all .2s}
+.fb:hover,.fb.ac{background:var(--brand);color:#fff;border-color:var(--brand)}
+
+.bc{display:flex;gap:1rem;margin-bottom:2rem;height:180px;align-items:flex-end}
+.bcl{flex:1;display:flex;flex-direction:column;align-items:center;gap:.25rem}
+.br{width:100%;border-radius:6px 6px 0 0;transition:height .6s ease}
+.bl{font-size:.7rem;color:var(--mu)}
+.bv{font-size:.8rem;font-weight:700}
+
+.tb{width:100%;border-collapse:collapse;margin:1rem 0}
+.tb th,.tb td{padding:.65rem .9rem;text-align:right;border-bottom:1px solid var(--bd);font-size:.85rem}
+.tb th{color:var(--mu);font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.5px}
+.tb tr:hover{background:var(--s2)}
+
+.ft2{text-align:center;padding:2rem;color:var(--mu);font-size:.8rem;border-top:1px solid var(--bd);margin-top:2rem}
+
+@media(max-width:768px){.hero h1{font-size:1.4rem}.sg{grid-template-columns:repeat(2,1fr)}.bc{height:140px}.fh{flex-wrap:wrap}}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>🔍 تحليل شامل V2 — بعد الإصلاحات</h1>
+  <p>متجر سينتاكس — Next.js 16 | SQLite | Prisma</p>
+  <div class="d">📅 27 يوليو 2026 — مراجعة شاملة بعد الجولة الأولى من الإصلاحات</div>
+</div>
+
+<div class="ct">
+
+<div class="sg">
+  <div class="st tl"><div class="n">77</div><div class="l">إجمالي الاكتشافات</div></div>
+  <div class="st cr"><div class="n">2</div><div class="l">حرج</div></div>
+  <div class="st hi"><div class="n">14</div><div class="l">مرتفع</div></div>
+  <div class="st md"><div class="n">33</div><div class="l">متوسط</div></div>
+  <div class="st lo"><div class="n">28</div><div class="l">منخفض</div></div>
+</div>
+
+<div style="background:var(--s1);border:1px solid var(--bd);border-radius:1rem;padding:1.5rem;margin-bottom:2rem">
+  <h3 style="margin-bottom:1rem;font-size:1rem">مقارنة مع الجولة السابقة</h3>
+  <table class="tb">
+    <thead><tr><th></th><th>V1</th><th>V2</th><th>التغيير</th></tr></thead>
+    <tbody>
+      <tr><td>حرج</td><td style="color:var(--r)">6</td><td style="color:var(--r)">2</td><td style="color:var(--g)">↓ 4 تم إصلاحها</td></tr>
+      <tr><td>مرتفع</td><td style="color:var(--o)">32</td><td style="color:var(--o)">14</td><td style="color:var(--g)">↓ 18 تم إصلاحها</td></tr>
+      <tr><td>متوسط</td><td style="color:var(--y)">42</td><td style="color:var(--y)">33</td><td style="color:var(--g)">↓ 9 تم إصلاحها</td></tr>
+      <tr><td>منخفض</td><td style="color:var(--g)">27</td><td style="color:var(--g)">28</td><td>→ 1 جديد</td></tr>
+      <tr style="font-weight:700"><td>المجموع</td><td>107</td><td>77</td><td style="color:var(--g)">↓ 30 تم إصلاحها (28%)</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div style="background:var(--s1);border:1px solid var(--bd);border-radius:1rem;padding:1.5rem;margin-bottom:2rem">
+  <h3 style="margin-bottom:1rem;font-size:1rem">توزيع الخطورة</h3>
+  <div class="bc">
+    <div class="bcl"><div class="bv" style="color:var(--r)">2</div><div class="br" style="height:25%;background:var(--r)"></div><div class="bl">حرج</div></div>
+    <div class="bcl"><div class="bv" style="color:var(--o)">14</div><div class="br" style="height:100%;background:var(--o)"></div><div class="bl">مرتفع</div></div>
+    <div class="bcl"><div class="bv" style="color:var(--y)">33</div><div class="br" style="height:78%;background:var(--y)"></div><div class="bl">متوسط</div></div>
+    <div class="bcl"><div class="bv" style="color:var(--g)">28</div><div class="br" style="height:66%;background:var(--g)"></div><div class="bl">منخفض</div></div>
+  </div>
+</div>
+
+<div style="background:var(--s1);border:1px solid var(--bd);border-radius:1rem;padding:1.5rem;margin-bottom:2rem">
+  <h3 style="margin-bottom:1rem;font-size:1rem">التصنيفات الفرعية</h3>
+  <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+    <div style="padding:.3rem .8rem;border-radius:999px;font-size:.78rem;font-weight:600;border:1px solid var(--bd);background:var(--s1)">🔒 أمن — 9</div>
+    <div style="padding:.3rem .8rem;border-radius:999px;font-size:.78rem;font-weight:600;border:1px solid var(--bd);background:var(--s1)">🎨 تصميم — 40</div>
+    <div style="padding:.3rem .8rem;border-radius:999px;font-size:.78rem;font-weight:600;border:1px solid var(--bd);background:var(--s1)">⚙️ منطق — 28</div>
+  </div>
+</div>
+
+<div class="fl">
+  <button class="fb ac" onclick="fAll()">الكل (77)</button>
+  <button class="fb" onclick="fCat('sec')">🔒 أمني (9)</button>
+  <button class="fb" onclick="fCat('des')">🎨 تصميمي (40)</button>
+  <button class="fb" onclick="fCat('log')">⚙️ منطقي (28)</button>
+</div>
+
+<!-- ======================== SECURITY ======================== -->
+<div class="sec" data-cat="sec">
+<div class="sh op" onclick="t(this)"><span class="ic">🔒</span><h2>الأمن والثغرات المتبقية</h2><span class="bg">9</span><svg class="ch" width="18" height="18" viewBox="0 0 20 20" fill="currentColor"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg></div>
+<div class="sb op">
+
+<div class="f"><div class="fh"><span class="fi">SEC-001</span><span class="sb2 sc">حرج</span><span class="ft">حالة سباق (Race Condition) في استخدام الكوبون</span></div><div class="fm"><span class="mt">📁 lib/coupons.ts:83</span><span class="mt">⚙️ Race Condition</span></div><div class="fd">دالة useCoupon تقرأ الكوبون وتتحقق من usedCount ثم تزيد في خطوتين منفصلتين غير ذرّاتييتين. طلبان متزامنان قد يتجاوزان حد الاستخدام الأقصى.</div><div class="fx"><strong>الاستغلال:</strong> مهاجم يُرسل طلبَي تسوّق متزامنين بنفس الكوبون. كلاهما يجتاز الفحص قبل زيادة الآخر<br><strong>الحل:</strong> استخدم Prisma transaction مع قفل أو updateMany شرطي يتحقق ويزيد في خطوة واحدة</div></div>
+
+<div class="f"><div class="fh"><span class="fi">SEC-002</span><span class="sb2 sh2">مرتفع</span><span class="ft">تسريب بيانات الطلبات بدون مصادقة (IDOR)</span></div><div class="fm"><span class="mt">📁 app/api/orders/track/route.ts</span><span class="mt">👁️ IDOR</span></div><div class="fd">نقطة النهاية /api/orders/track تكشف: اسم العميل، بريده، المبلغ الإجمالي، بنود الطلب، وحالته لأي شخص بدون مصادقة.</div><div class="fx"><strong>الاستغلال:</strong> البحث بالبريد الإلكتروني أو رقم الطلب لجمع بيانات جميع العملاء<br><strong>الحل:</strong> أضف مصادقة وتأكد أن المستخدم هو صاحب الطلب فقط</div></div>
+
+<div class="f"><div class="fh"><span class="fi">SEC-003</span><span class="sb2 sh2">مرتفع</span><span class="ft">حقن الإعدادات الحساسة عبر API</span></div><div class="fm"><span class="mt">📁 app/api/admin/settings/route.ts:14</span><span class="mt">🛡️ Privilege Escalation</span></div><div class="fd">POST /api/admin/settings تقبل أي مفتاح/قيمة. المدير الفرعي يمكنه تغيير google_client_secret أو maintenance_mode.</div><div class="fx"><strong>الاستغلال:</strong> manager يُرسل body مع {google_client_secret: "controlled-by-attacker"}<br><strong>الحل:</strong> تحقق من أن المفتاح موجود في SETTING_KEYS قبل الحفظ</div></div>
+
+<div class="f"><div class="fh"><span class="fi">SEC-004</span><span class="sb2 sm">متوسط</span><span class="ft">كوكي الصيانة بدون توقيع معمّي حقيقي</span></div><div class="fm"><span class="mt">📁 middleware.ts:19</span><span class="mt">🛡️ Weak Auth</span></div><div class="fd">قيمة الكوكي 'signed:1' مجرد نص ثابت. لا يوجد توقيع HMAC فعلي. في بيئة HTTP غير مشفّرة يمكن تزويره.</div><div class="fx"><strong>الحل:</strong> استخدم HMAC مع AUTH_SECRET: crypto.createHmac('sha256', secret).update('1').digest('hex')</div></div>
+
+<div class="f"><div class="fh"><span class="fi">SEC-005</span><span class="sb2 sm">متوسط</span><span class="ft">عدم وجود Content-Security-Policy</span></div><div class="fm"><span class="mt">📁 next.config.ts</span><span class="mt">🛡️ Missing Header</span></div><div class="fd">رأس CSP غير موجود. يزيد من خطر XSS وتحميل مصادر خارجية ضارة.</div><div class="fx"><strong>الحل:</strong> أضف CSP header: default-src 'self'; script-src 'self' 'unsafe-inline'; img-src 'self' data: blob:</div></div>
+
+<div class="f"><div class="fh"><span class="fi">SEC-006</span><span class="sb2 sm">متوسط</span><span class="ft">حذف الحساب بدون transaction ولا حذف ملفات</span></div><div class="fm"><span class="mt">📁 app/actions/account.ts:89</span><span class="mt">⚙️ Data Integrity</span></div><div class="fd">حذف الحساب بعدة عمليات متتالية بدون transaction. صور الإثبات (proofImage) تبقى على القرص بعد الحذف.</div><div class="fx"><strong>الحل:</strong> لُف في prisma.$transaction() واحذف الملفات بـ fs.unlink()</div></div>
+
+<div class="f"><div class="fh"><span class="fi">SEC-007</span><span class="sb2 sm">متوسط</span><span class="ft">AUTH_SECRET يُستخدم في بيئة التطوير بدون تعليق</span></div><div class="fm"><span class="mt">📁 .env:9</span><span class="mt">🔐 Secret Mgmt</span></div><div class="fd">ملف .env يحتوي على AUTH_SECRET حقيقي. لو نُشر بدون تغيير، أي شخص يوقع JWT tokens ويصبح أدمن.</div><div class="fx"><strong>الحل:</strong> غيّر المفتاح في كل بيئة نشر + أضف تعليق واضح</div></div>
+
+<div class="f"><div class="fh"><span class="fi">SEC-008</span><span class="sb2 sl">منخفض</span><span class="ft">حالة الطلب بدون مصادقة تسمح بالتخمين</span></div><div class="fm"><span class="mt">📁 app/api/order-status/[id]/route.ts</span><span class="mt">👁️ Info Disclosure</span></div><div class="fd">كشف حالة أي طلب بمعرفه دون مصادقة. يسمح بالتحقق من وجود أو مراقبة تغييرات حالة طلبات معينة.</div></div>
+
+<div class="f"><div class="fh"><span class="fi">SEC-009</span><span class="sb2 sl">منخفض</span><span class="ft">صور إثبات الدفع تبقى بعد حذف الحساب (GDPR)</span></div><div class="fm"><span class="mt">📁 app/actions/account.ts</span><span class="mt">🔒 Privacy</span></div><div class="fd">بعد حذف الحساب، ملفات صور الإثبات في public/uploads/proofs/ تبقى على القرص. انتهاك محتمل لخصوصية المستخدم.</div></div>
+
+</div></div>
+
+<!-- ======================== DESIGN ======================== -->
+<div class="sec" data-cat="des">
+<div class="sh" onclick="t(this)"><span class="ic">🎨</span><h2>التصميم والواجهة</h2><span class="bg">40</span><svg class="ch" width="18" height="18" viewBox="0 0 20 20" fill="currentColor"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg></div>
+<div class="sb">
+
+<div class="f"><div class="fh"><span class="fi">UX-001</span><span class="sb2 sh2">مرتفع</span><span class="ft">CartDrawer: عدم وجود فخاخ للتركيز (Focus Trap)</span></div><div class="fm"><span class="mt">📁 components/CartDrawer.tsx:22</span><span class="mt">♿ accessibility</span></div><div class="fd">الدرج يدعم إغلاق بـ Escape فقط. لا يوجد فخ للتركيز. مستخدمو لوحة المفاتيح ي Navigate خارج الدرج.</div></div>
+
+<div class="f"><div class="fh"><span class="fi">UX-002</span><span class="sb2 sh2">مرتفع</span><span class="ft">SiteHeader: قائمة الموبايل مفقودة</span></div><div class="fm"><span class="mt">📁 components/SiteHeader.tsx</span><span class="mt">📱 responsive</span></div><div class="fd">لا يوجد زر hamburger أو قائمة جانبية للموبايل. الروابط الإضافية تختفي بدون بديل.</div></div>
+
+<div class="f"><div class="fh"><span class="fi">UX-003</span><span class="sb2 sh2">مرتفع</span><span class="ft">globals.css: ثيم الفاتح مفقود بالكامل</span></div><div class="fm"><span class="mt">📁 app/globals.css</span><span class="mt">🎨 theme</span></div><div class="fd">لا يوجد `.light` أو `@media (prefers-color-scheme: light)`. الثيم الفاتح لا يعمل مطلقاً.</div></div>
+
+<div class="f"><div class="fh"><span class="fi">UX-004</span><span class="sb2 sh2">مرتفع</span><span class="ft">layout.tsx: لا يوجد مفتاح تبديل الثيم</span></div><div class="fm"><span class="mt">📁 app/layout.tsx</span><span class="mt">🎯 ux</span></div><div class="fd">لا يوجد زر ThemeToggle في الهيدر لتبديل بين الغامق والفاتح.</div></div>
+
+<div class="f"><div class="fh"><span class="fi">UX-005</span><span class="sb2 sh2">مرتفع</span><span class="ft">LiveSearch: نتائج البحث بلا ARIA</span></div><div class="fm"><span class="mt">📁 components/LiveSearch.tsx:179</span><span class="mt">♿ accessibility</span></div><div class="fd">قائمة النتائج بلا `role=listbox` أو `role=option` أو `aria-activedescendant` أو `aria-live`.</div></div>
+
+<div class="f"><div class="fh"><span class="fi">UX-006</span><span class="sb2 sm">متوسط</span><span class="ft">CartDrawer: زر الحذف صغير للمس (18×18)</span></div><div class="fm"><span class="mt">📁 components/CartDrawer.tsx:119</span><span class="mt">♿ accessibility</span></div><div class="fd">الحد الأدنى للمس 44×44px. الزر الحالي 18×18px.</div></div>
+
+<div class="f"><div class="fh"><span class="fi">UX-007</span><span class="sb2 sm">متوسط</span><span class="ft">ReviewForm: نجوم التقييم بلا ARIA</span></div><div class="fm"><span class="mt">📁 components/ReviewForm.tsx:61</span><span class="mt">♿ accessibility</span></div><div class="fd">مجموعة النجوم بلا `role=radiogroup` أو `aria-label` أو `focus-visible` styling.</div></div>
+
+<div class="f"><div class="fh"><span class="fi">UX-008</span><span class="sb2 sm">متوسط</span><span class="ft">CheckoutMultiStep: أخطاء التحقق غير معلنة</span></div><div class="fm"><span class="mt">📁 components/CheckoutMultiStep.tsx:116</span><span class="mt">♿ accessibility</span></div><div class="fd">لا يوجد `aria-invalid` أو `aria-describedby` ربط الخطأ بالحقل. المستخدم لا يعرف أي حقل به خطأ.</div></div>
+
+<div class="f"><div class="fh"><span class="fi">UX-009</span><span class="sb2 sm">متوسط</span><span class="ft">ReviewList: صورة المعدل بلا Focus Trap</span></div><div class="fm"><span class="mt">📁 components/ReviewList.tsx:100</span><span class="mt">♿ accessibility</span></div><div class="fd">modal الصورة بلا فخ للتركيز. المستخدم يتنقل خارجه بلوحة المفاتيح.</div></div>
+
+<div class="f"><div class="fh"><span class="fi">UX-010</span><span class="sb2 sm">متوسط</span><span class="ft">AuthForm: حقول الخطأ بلا role=alert</span></div><div class="fm"><span class="mt">📁 components/AuthForm.tsx</span><span class="mt">♿ accessibility</span></div><div class="fd">رسائل الخطأ تظهر كنص فقط بدون `role=alert` أو `aria-live=assertive`.</div></div>
+
+<div class="f"><div class="fh"><span class="fi">UX-011</span><span class="sb2 sm">متوسط</span><span class="ft">ShareButtons: فرق Hydration</span></div><div class="fm"><span class="mt">📁 components/ShareButtons.tsx:13</span><span class="mt">🎯 ux</span></div><div class="fd">الـ URL يبدأ كـ empty string على السيرفر ثم يُعيَّن في useEffect. فرق في المحتوى أثناء hydration.</div></div>
+
+<div class="f"><div class="fh"><span class="fi">UX-012</span><span class="sb2 sm">متوسط</span><span class="ft">CheckoutMultiStep: لا يوجد aria-live للأسعار</span></div><div class="fm"><span class="mt">📁 components/CheckoutMultiStep.tsx:437</span><span class="mt">♿ accessibility</span></div><div class="fd">الأسعار تتحدث ديناميكياً لكن لا يوجد `aria-live=polite` لإعلام قارئات الشاشة.</div></div>
+
+<div class="f"><div class="fh"><span class="fi">UX-013</span><span class="sb2 sm">متوسط</span><span class="ft">CartDrawer: لا يوجد aria-live لعدد العناصر</span></div><div class="fm"><span class="mt">📁 components/CartDrawer.tsx:55</span><span class="mt">♿ accessibility</span></div><div class="fd">عند إضافة/حذف منتج، العدد يتحدث بدون `aria-live`.</div></div>
+
+<div class="f"><div class="fh"><span class="fi">UX-014</span><span class="sb2 sm">متوسط</span><span class="ft">SiteFooter: أيقونات التواصل 36px (أقل من 44px)</span></div><div class="fm"><span class="mt">📁 components/SiteFooter.tsx:110</span><span class="mt">📱 responsive</span></div><div class="fd">الحد الأدنى للمس 44px. الأيقونات حجمها h-9 w-9 = 36px.</div></div>
+
+<div class="f"><div class="fh"><span class="fi">UX-015</span><span class="sb2 sm">متوسط</span><span class="ft">AuthForm: حقل كلمة السر بلا minLength HTML</span></div><div class="fm"><span class="mt">📁 components/AuthForm.tsx:89</span><span class="mt">♿ accessibility</span></div><div class="fd">لا يوجد `minLength=6` أو `pattern` في الـ HTML. فقط نص '6 حروف على الأقل'.</div></div>
+
+<div class="f"><div class="fh"><span class="fi">UX-016</span><span class="sb2 sm">متوسط</span><span class="ft">not-found: الصفحة 404 بلا skip link</span></div><div class="fm"><span class="mt">📁 app/not-found.tsx</span><span class="mt">♿ accessibility</span></div><div class="fd">لا يوجد `id=main-content` ولا `tabIndex=-1` لدعم skip-to-content.</div></div>
+
+<div class="f"><div class="fh"><span class="fi">UX-017</span><span class="sb2 sm">متوسط</span><span class="ft">SiteHeader: البحث مخفي على الموبايل بدون بديل</span></div><div class="fm"><span class="mt">📁 components/SiteHeader.tsx:47</span><span class="mt">📱 responsive</span></div><div class="fd">LiveSearch مخفي بـ `hidden md:block`. لا يوجد بحث بديل للموبايل.</div></div>
+
+<div class="f"><div class="fh"><span class="fi">UX-018 → UX-040</span><span class="sb2 sl">منخفض</span><span class="ft">23 مشكلة إضافية</span></div><div class="fd">تشمل: CompareBar overlap، scrollbar-hide غير مستخدم، CompareTable محتاج تلميح تمرير، LiveSearch أخطاء API تبتلع بصمت، ErrorBoundary بلا نسخ خطأ، global-error بلا aria-label، ProductCard أزرار داخل الرابط، RelatedProducts RTL scroll، OptimizeImage error aria، تسجيل بلا تحقق كلمة سر HTML، Checkout خطوات ARIA خاطئة، Checkout رفع إثبات لا يتناسب، مسح سجل LiveSearch بلا تأكيد، زر حذف CartPage صغير، و许多 أكثر.</div></div>
+
+</div></div>
+
+<!-- ======================== LOGIC ======================== -->
+<div class="sec" data-cat="log">
+<div class="sh" onclick="t(this)"><span class="ic">⚙️</span><h2>المنطق والاكتمال</h2><span class="bg">28</span><svg class="ch" width="18" height="18" viewBox="0 0 20 20" fill="currentColor"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg></div>
+<div class="sb">
+
+<div class="f"><div class="fh"><span class="fi">LOGIC-001</span><span class="sb2 sc">حرج</span><span class="ft">ترتيب بالتقييم (rating_desc) يكسر التقسيم</span></div><div class="fm"><span class="mt">📁 lib/products.ts:186</span><span class="mt">⚙️ business_logic</span></div><div class="fd">عند ترتيب المنتجات بالتقييم، يتم جلب كل المنتجات من DB ثم تصفية بالـ JS. النتائج غير صحيحة والعد الكلي خاطئ.</div><div class="fx"><strong>الحل:</strong> استخدم Prisma groupBy لحساب المتوسط ثم اعتمد عليه في الترتيب والفلترة</div></div>
+
+<div class="f"><div class="fh"><span class="fi">LOGIC-002</span><span class="sb2 sh2">مرتفع</span><span class="ft">السلة لا تتحقق من نشاط المنتجات</span></div><div class="fm"><span class="mt">📁 app/cart/page.tsx:14</span><span class="mt">⚠️ edge_case</span></div><div class="fd">السلة تعرض المنتجات من localStorage بدون التحقق مما إذا كانت لا تزال active في DB.</div><div class="fx"><strong>الحل:</strong> عند تحميل السلة، أرسل المعرّفات لـ API يتحقق من `active` لكل منتج</div></div>
+
+<div class="f"><div class="fh"><span class="fi">LOGIC-003</span><span class="sb2 sh2">مرتفع</span><span class="ft">السلة لا تتحقق من الأسعار الحالية</span></div><div class="fm"><span class="mt">📁 app/cart/page.tsx</span><span class="mt">⚙️ business_logic</span></div><div class="fd">سعر المنتج يُحفظ عند الإضافة ولا يُحدّث لو تغيّر. العميل يرى سعراً قديماً.</div><div class="fx"><strong>الحل:</strong> مزامنة الأسعار مع DB عبر API أو عرض تنبيه بتغيّر السعر</div></div>
+
+<div class="f"><div class="fh"><span class="fi">LOGIC-004</span><span class="sb2 sh2">مرتفع</span><span class="ft">تحميل الملفات لا يزيد عداد التحميل</span></div><div class="fm"><span class="mt">📁 app/api/download/route.ts:6</span><span class="mt">⚙️ business_logic</span></div><div class="fd">لا يتم زيادة `downloadCount` على المنتج ولا على FileDownloadLink. لا يوجد تتبع للتحميلات.</div><div class="fx"><strong>الحل:</strong> بعد التحقق، زِد product.downloadCount و fileDownloadLink.downloadCount</div></div>
+
+<div class="f"><div class="fh"><span class="fi">LOGIC-005</span><span class="sb2 sh2">مرتفع</span><span class="ft">Validation step 2 يطلب صورة إثبات حتى للطلبات المجانية</span></div><div class="fm"><span class="mt">📁 components/CheckoutMultiStep.tsx:130</span><span class="mt">⚙️ business_logic</span></div><div class="fd">validateStep(2) يتحقق من وجود ملف إثبات دائماً. طلب مجاني (كوبون يصفر المجموع) لا يمكن إتمامه.</div><div class="fx"><strong>الحل:</strong> تحقق من finalTotal === 0 وأوقف طلب الملف في هذه الحالة</div></div>
+
+<div class="f"><div class="fh"><span class="fi">LOGIC-006</span><span class="sb2 sh2">مرتفع</span><span class="ft">لا يوجد rate limiting على API التحقق من الكوبون</span></div><div class="fm"><span class="mt">📁 app/api/coupon/validate/route.ts</span><span class="mt">⚡ rate_limit</span></div><div class="fd">endpoint التحقق يسمح بـ brute-force لكشف أكواد الكوبونات.</div><div class="fx"><strong>الحل:</strong> أضف rate limit مثل 10 محاولات كل دقيقة</div></div>
+
+<div class="f"><div class="fh"><span class="fi">LOGIC-007</span><span class="sb2 sh2">مرتفع</span><span class="ft">لا توجد صفحة طلبات المستخدم (my orders)</span></div><div class="fm"><span class="mt">📁 lib/orders.ts:79</span><span class="mt">🚧 missing</span></div><div class="fd">دالة `getUserOrders` موجودة لكن لا يوجد route يعرضها. العميل لا يتابع طلباته إلا برقم الطلب.</div><div class="fx"><strong>الحل:</strong> أنشئ صفحة /account/orders</div></div>
+
+<div class="f"><div class="fh"><span class="fi">LOGIC-008</span><span class="sb2 sh2">مرتفع</span><span class="ft">حذف منتج يحوي طلبات بدون حماية</span></div><div class="fm"><span class="mt">📁 app/actions/admin.ts:294</span><span class="mt">⚙️ business_logic</span></div><div class="fd">deleteProductAction تحذف مباشرة. البيانات التاريخية للطلبات القديمة ستفقد اسم المنتج.</div><div class="fx"><strong>الحل:</strong> تحقق من orderItems المرتبطة واعرض تحذيراً أو غيّر الحالة لـ inactive</div></div>
+
+<div class="f"><div class="fh"><span class="fi">LOGIC-009</span><span class="sb2 sh2">مرتفع</span><span class="ft">PaymentMethod fallback غير متسق في checkout</span></div><div class="fm"><span class="mt">📁 app/actions/checkout.ts:93</span><span class="mt">⚙️ business_logic</span></div><div class="fd">لو المستخدم لا يختار طريقة دفع، الطلب يُنشأ بـ 'transfer' حتى لو غير موجودة في الإعدادات.</div><div class="fx"><strong>الحل:</strong> تحقق من وجود payment methods مفعلة في البداية</div></div>
+
+<div class="f"><div class="fh"><span class="fi">LOGIC-010</span><span class="sb2 sm">متوسط</span><span class="ft">Review لا يمنع تقييمات متكررة لنفس المنتج</span></div><div class="fm"><span class="mt">📁 prisma/schema.prisma:130</span><span class="mt">📐 schema</span></div><div class="fd">جدول Review بلا `@@unique([userId, productId])`. يمكن تقييم نفس المنتج عدة مرات.</div></div>
+
+<div class="f"><div class="fh"><span class="fi">LOGIC-011</span><span class="sb2 sm">متوسط</span><span class="ft">FlashSale لا علاقة له بـ Product relationally</span></div><div class="fm"><span class="mt">📁 prisma/schema.prisma:254</span><span class="mt">📐 schema</span></div><div class="fd">FlashSale بلا foreign key relation مع Product. لا يمكن استخدام Prisma include.</div></div>
+
+<div class="f"><div class="fh"><span class="fi">LOGIC-012</span><span class="sb2 sm">متوسط</span><span class="ft">القسيمة تُحسب على المجموع بدون Bump</span></div><div class="fm"><span class="mt">📁 app/actions/checkout.ts:168</span><span class="mt">⚙️ business_logic</span></div><div class="fd">في السلة القسيمة على subtotal قبل Bump. في checkout على effSubtotal شامل Bump. عدم تطابق.</div></div>
+
+<div class="f"><div class="fh"><span class="fi">LOGIC-013</span><span class="sb2 sm">متوسط</span><span class="ft">Admin products/tickets/users لا يحتوي pagination</span></div><div class="fm"><span class="mt">📁 app/admin/products/page.tsx</span><span class="mt">⚡ performance</span></div><div class="fd">الثلاث تجلب كل البيانات بدون تقسيم. بطء مع تنامي البيانات.</div></div>
+
+<div class="f"><div class="fh"><span class="fi">LOGIC-014</span><span class="sb2 sm">متوسط</span><span class="ft">Dashboard إحصائيات المبيعات تشمل الطلبات الملغاة</span></div><div class="fm"><span class="mt">📁 app/admin/page.tsx:61</span><span class="mt">⚙️ business_logic</span></div><div class="fd">topProductsByOrders يستخدم groupBy بدون فلترة حالة الطلب. الطلبات الملغاة تُحسب.</div></div>
+
+<div class="f"><div class="fh"><span class="fi">LOGIC-015</span><span class="sb2 sm">متوسط</span><span class="ft">rate-limit cleanup() يعمل عند كل طلب</span></div><div class="fm"><span class="mt">📁 lib/rate-limit.ts:5</span><span class="mt">⚡ performance</span></div><div class="fd">cleanup() تمسح كل المفاتيح المنتهية عند كل طلب. مع عدة مفاتيح تبطئ.</div></div>
+
+<div class="f"><div class="fh"><span class="fi">LOGIC-016</span><span class="sb2 sm">متوسط</span><span class="ft">lowStock filter غير مناسب للمنتجات الرقمية</span></div><div class="fm"><span class="mt">📁 app/admin/page.tsx:82</span><span class="mt">⚙️ business_logic</span></div><div class="fd">الفلتر downloadCount < ordersCount * 0.5 غير مناسب. كل طلب رقمي = تحميل واحد.</div></div>
+
+<div class="f"><div class="fh"><span class="fi">LOGIC-017</span><span class="sb2 sm">متوسط</span><span class="ft">الكوبون لا يُحسب بحد أقصى للخصم</span></div><div class="fm"><span class="mt">📁 lib/coupons.ts:67</span><span class="mt">⚠️ edge_case</span></div><div class="fd">لا يوجد maxDiscountCents. كوبون 90% على منتج 1000ج = خصم 900ج بدون حد.</div></div>
+
+<div class="f"><div class="fh"><span class="fi">LOGIC-018</span><span class="sb2 sl">منخفض</span><span class="ft">Cart `add` type يشير إلى qty غير موجود</span></div><div class="fm"><span class="mt">📁 lib/cart.tsx:28</span><span class="mt">🚧 incomplete</span></div><div class="fd">`Omit<CartItem, "qty">` يشير لحقل qty غير موجود في CartItem. خطأ في النوع فقط.</div></div>
+
+<div class="f"><div class="fh"><span class="fi">LOGIC-019 → LOGIC-028</span><span class="sb2 sl">منخفض</span><span class="ft">10 مشاكل إضافية</span></div><div class="fd">تشمل: timezone غير موحد، slugify عربي، DownloadToken لا يُحذف بعد الاستخدام، admin users لا يفرز بالدور، rate-limit يُعاد تهيئته، checkout step validation، StartOfWeek غير متوافق مع الثقافة العربية، coupon minOrderCents غير متسق مع Bump، و غيرها.</div></div>
+
+</div></div>
+
+<!-- ======================== PRIORITY TABLE ======================== -->
+<div style="background:var(--s1);border:1px solid var(--bd);border-radius:1rem;padding:1.5rem;margin-bottom:2rem">
+<h3 style="margin-bottom:1rem;font-size:1.1rem">📋 أولويات الإصلاح — الجولة الثانية</h3>
+<table class="tb">
+<thead><tr><th>#</th><th>المعرف</th><th>المشكلة</th><th>الخطورة</th><th>الملف</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>SEC-001</td><td>Race Condition في الكوبونات</td><td><span class="sb2 sc">حرج</span></td><td>lib/coupons.ts</td></tr>
+<tr><td>2</td><td>LOGIC-001</td><td>ترتيب بالتقييم يكسر التقسيم</td><td><span class="sb2 sc">حرج</span></td><td>lib/products.ts</td></tr>
+<tr><td>3</td><td>SEC-002</td><td>تسريب بيانات الطلبات (IDOR)</td><td><span class="sb2 sh2">مرتفع</span></td><td>app/api/orders/track</td></tr>
+<tr><td>4</td><td>SEC-003</td><td>حقن الإعدادات الحساسة</td><td><span class="sb2 sh2">مرتفع</span></td><td>app/api/admin/settings</td></tr>
+<tr><td>5</td><td>LOGIC-002</td><td>السلة لا تتحقق من نشاط المنتجات</td><td><span class="sb2 sh2">مرتفع</span></td><td>app/cart/page.tsx</td></tr>
+<tr><td>6</td><td>LOGIC-003</td><td>السلة لا تتحقق من الأسعار</td><td><span class="sb2 sh2">مرتفع</span></td><td>app/cart/page.tsx</td></tr>
+<tr><td>7</td><td>LOGIC-004</td><td>عداد التحميل لا يزداد</td><td><span class="sb2 sh2">مرتفع</span></td><td>app/api/download</td></tr>
+<tr><td>8</td><td>LOGIC-005</td><td>طلب مجاني لا يمكن إتمامه</td><td><span class="sb2 sh2">مرتفع</span></td><td>CheckoutMultiStep</td></tr>
+<tr><td>9</td><td>LOGIC-007</td><td>لا توجد صفحة طلباتي</td><td><span class="sb2 sh2">مرتفع</span></td><td>app/account</td></tr>
+<tr><td>10</td><td>SEC-004</td><td>كوكي الصيانة بدون توقيع</td><td><span class="sb2 sm">متوسط</span></td><td>middleware.ts</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- ======================== WHAT WAS FIXED ======================== -->
+<div style="background:var(--s1);border:1px solid var(--bd);border-radius:1rem;padding:1.5rem;margin-bottom:2rem">
+<h3 style="margin-bottom:1rem;font-size:1.1rem">✅ ما تم إصلاحه في هذه الجولة (30 إصلاح)</h3>
+<table class="tb">
+<thead><tr><th>الفئة</th><th>الإصلاح</th><th>الملفات</th></tr></thead>
+<tbody>
+<tr><td>🔒 أمن</td><td>حالة الصيانة: cookie موقّع من server</td><td>middleware.ts, settings.ts</td></tr>
+<tr><td>🔒 أمن</td><td>المستخدم المحظور لا يُمنع — تم الإصلاح</td><td>lib/auth.ts</td></tr>
+<tr><td>🔒 أمن</td><td>رفع ملفات: قائمة امتدادات مسموحة</td><td>app/api/upload/file</td></tr>
+<tr><td>🔒 أمن</td><td>Security Headers: 6 headers</td><td>next.config.ts</td></tr>
+<tr><td>🔒 أمن</td><td>product-export: requireAdmin()</td><td>app/actions/product-export</td></tr>
+<tr><td>📐 DB</td><td>OrderItem: onDelete: SetNull</td><td>schema.prisma</td></tr>
+<tr><td>📐 DB</td><td>Review.rating: @@check 1-5</td><td>schema.prisma</td></tr>
+<tr><td>⚙️ منطق</td><td>Coupon: maxPerUser includes returned</td><td>lib/coupons.ts</td></tr>
+<tr><td>⚙️ منطق</td><td>Checkout: paymentMethod = selectedMethod</td><td>CheckoutMultiStep</td></tr>
+<tr><td>🛒 سلة</td><td>حُذف setQty — qty ثابت 1</td><td>lib/cart.tsx + 10 ملفات</td></tr>
+<tr><td>🏆 ولاء</td><td>حُذف نظام الولاء بالكامل</td><td>lib/settings.ts</td></tr>
+<tr><td>🎨 RTL</td><td>WishlistButton: right-3</td><td>WishlistButton.tsx</td></tr>
+<tr><td>🎨 RTL</td><td>CartBadge: -right-1.5</td><td>CartButton.tsx</td></tr>
+<tr><td>🎨 RTL</td><td>SearchBar: right-2 + pl-10</td><td>SearchBar.tsx</td></tr>
+<tr><td>♿ وصول</td><td>LiveSearch: aria-label</td><td>LiveSearch.tsx</td></tr>
+<tr><td>♿ وصول</td><td>Skip-to-content link</td><td>layout.tsx</td></tr>
+<tr><td>♿ وصول</td><td>نسيت كلمة السر — رابط</td><td>AuthForm.tsx</td></tr>
+<tr><td>📄 صفحات</td><td>global-error.tsx</td><td>app/global-error.tsx</td></tr>
+<tr><td>📄 صفحات</td><td>not-found.tsx (404)</td><td>app/not-found.tsx</td></tr>
+</tbody>
+</table>
+</div>
+
+<div style="background:var(--s1);border:1px solid var(--bd);border-radius:1rem;padding:1.5rem;margin-bottom:2rem">
+<h3 style="margin-bottom:1rem;font-size:1.1rem">🎯 الخطة المقترحة للجولة الثالثة</h3>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem">
+<div style="background:var(--s2);border-radius:12px;padding:1.25rem;border-right:3px solid var(--r)">
+<h4 style="color:var(--r);margin-bottom:.5rem">🔴 فوري (أسبوع)</h4>
+<ul style="list-style:none;font-size:.85rem;color:var(--mu)">
+<li>• إصلاح Race Condition في useCoupon (atomic update)</li>
+<li>• إصلاح rating_desc pagination في products.ts</li>
+<li>• إضافة مصادقة لـ order tracking API</li>
+<li>• تقييد admin settings API بالـ SETTING_KEYS</li>
+<li>• تفعيل عداد التحميل downloadCount</li>
+</ul>
+</div>
+<div style="background:var(--s2);border-radius:12px;padding:1.25rem;border-right:3px solid var(--o)">
+<h4 style="color:var(--o);margin-bottom:.5rem">🟠 قريب (شهر)</h4>
+<ul style="list-style:none;font-size:.85rem;color:var(--mu)">
+<li>• فحص نشاط المنتجات + الأسعار في السلة</li>
+<li>• صفحة "طلباتي" /account/orders</li>
+<li>• إصلاح validation للطلبات المجانية</li>
+<li>• إضافة rate limiting على coupon validate</li>
+<li>• صفحة hamburger للموبايل</li>
+</ul>
+</div>
+<div style="background:var(--s2);border-radius:12px;padding:1.25rem;border-right:3px solid var(--y)">
+<h4 style="color:var(--y);margin-bottom:.5rem">🟡 تحسين (3 أشهر)</h4>
+<ul style="list-style:none;font-size:.85rem;color:var(--mu)">
+<li>• تفعيل الثيم الفاتح + ThemeToggle</li>
+<li>• Focus trap للـ drawers/modals</li>
+<li>• ARIA live regions للأسعار والعدادات</li>
+<li>• Pagination للإدارة</li>
+<li>• CSP header كامل</li>
+</ul>
+</div>
+</div>
+</div>
+
+<div class="ft2">
+<p>تم التحليل بواسطة AI — فحص 150+ ملف و 5000+ سطر كود</p>
+<p style="margin-top:.5rem">مقارنة بين جولتين: V1 (107 مشكلة) → V2 (77 مشكلة) = 30 إصلاح (28%)</p>
+</div>
+
+</div>
+
+<script>
+function t(h){const b=h.nextElementSibling;h.classList.toggle('op');b.classList.toggle('op')}
+function fAll(){document.querySelectorAll('.fb').forEach(b=>b.classList.remove('ac'));event.target.classList.add('ac');document.querySelectorAll('.sec').forEach(s=>s.style.display='')}
+function fCat(c){document.querySelectorAll('.fb').forEach(b=>b.classList.remove('ac'));event.target.classList.add('ac');document.querySelectorAll('.sec').forEach(s=>{if(s.dataset.cat===c){s.style.display='';s.querySelector('.sh').classList.add('op');s.querySelector('.sb').classList.add('op')}else s.style.display='none'})}
+</script>
+
+</body>
+</html>

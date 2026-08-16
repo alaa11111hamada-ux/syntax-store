@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تحليل شامل — متجر سينتاكس</title>
+<style>
+  :root {
+    --bg: #0a0a0f; --surface: #111118; --surface2: #1a1a24;
+    --border: #2a2a3a; --fg: #e8e8f0; --muted: #8888a0;
+    --brand: #8b5cf6; --brand-light: #a78bfa;
+    --red: #ef4444; --orange: #f97316; --yellow: #eab308; --green: #22c55e; --blue: #3b82f6;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); color: var(--fg); line-height: 1.7; }
+  
+  .hero {
+    background: linear-gradient(135deg, #1a0533 0%, #0a0a1a 50%, #0a1628 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 3rem 2rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 30% 50%, rgba(139,92,246,0.08) 0%, transparent 50%),
+                radial-gradient(circle at 70% 50%, rgba(59,130,246,0.06) 0%, transparent 50%);
+    animation: pulse 8s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
+  .hero h1 { font-size: 2.5rem; font-weight: 800; position: relative; background: linear-gradient(135deg, var(--brand-light), var(--blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .hero p { color: var(--muted); margin-top: 0.5rem; font-size: 1.1rem; position: relative; }
+  .hero .date { color: var(--brand-light); font-size: 0.9rem; margin-top: 1rem; position: relative; }
+  
+  .container { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+  
+  /* Stats Grid */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 2.5rem; }
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    text-align: center;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .stat:hover { transform: translateY(-2px); border-color: var(--brand); }
+  .stat .num { font-size: 2.5rem; font-weight: 800; line-height: 1; }
+  .stat .label { color: var(--muted); font-size: 0.85rem; margin-top: 0.4rem; }
+  .stat.critical .num { color: var(--red); }
+  .stat.high .num { color: var(--orange); }
+  .stat.medium .num { color: var(--yellow); }
+  .stat.low .num { color: var(--green); }
+  .stat.total .num { color: var(--brand-light); }
+  
+  /* Section */
+  .section { margin-bottom: 3rem; }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 1rem 1rem 0 0;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s;
+  }
+  .section-header:hover { background: var(--surface2); }
+  .section-header .icon { font-size: 1.5rem; }
+  .section-header h2 { font-size: 1.2rem; font-weight: 700; flex: 1; }
+  .section-header .badge {
+    background: var(--brand);
+    color: white;
+    padding: 0.2rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  .section-header .chevron {
+    transition: transform 0.3s;
+    color: var(--muted);
+  }
+  .section-header.open .chevron { transform: rotate(180deg); }
+  
+  .section-body {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 1rem 1rem;
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.4s ease;
+  }
+  .section-body.open { max-height: 50000px; }
+  
+  /* Finding Card */
+  .finding {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  .finding:last-child { border-bottom: none; }
+  .finding:hover { background: var(--surface2); }
+  .finding-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; }
+  .finding-id { font-family: monospace; font-size: 0.75rem; color: var(--muted); background: var(--surface2); padding: 0.15rem 0.5rem; border-radius: 4px; }
+  .finding-title { font-weight: 600; font-size: 0.95rem; }
+  .sev-badge {
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .sev-critical { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+  .sev-high { background: rgba(249,115,22,0.15); color: var(--orange); border: 1px solid rgba(249,115,22,0.3); }
+  .sev-medium { background: rgba(234,179,8,0.15); color: var(--yellow); border: 1px solid rgba(234,179,8,0.3); }
+  .sev-low { background: rgba(34,197,94,0.15); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+  
+  .finding-meta { display: flex; gap: 1rem; margin-bottom: 0.5rem; flex-wrap: wrap; }
+  .meta-tag { font-size: 0.75rem; color: var(--muted); background: rgba(255,255,255,0.05); padding: 0.15rem 0.5rem; border-radius: 4px; }
+  .finding-desc { font-size: 0.88rem; color: var(--fg); margin-bottom: 0.5rem; line-height: 1.8; }
+  .finding-detail { font-size: 0.82rem; color: var(--muted); padding: 0.75rem; background: rgba(0,0,0,0.3); border-radius: 8px; margin-top: 0.5rem; border-right: 3px solid var(--brand); }
+  .finding-detail strong { color: var(--brand-light); }
+  
+  /* Filter Tabs */
+  .filters { display: flex; gap: 0.5rem; margin-bottom: 2rem; flex-wrap: wrap; }
+  .filter-btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+  }
+  .filter-btn:hover, .filter-btn.active {
+    background: var(--brand);
+    color: white;
+    border-color: var(--brand);
+  }
+  
+  /* Bar Chart */
+  .bar-chart { display: flex; gap: 1rem; margin-bottom: 2rem; height: 200px; align-items: flex-end; }
+  .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+  .bar {
+    width: 100%;
+    border-radius: 6px 6px 0 0;
+    transition: height 0.6s ease;
+    position: relative;
+  }
+  .bar-label { font-size: 0.75rem; color: var(--muted); }
+  .bar-val { font-size: 0.85rem; font-weight: 700; }
+  
+  /* Category Pills */
+  .cat-pills { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 2rem; }
+  .cat-pill {
+    padding: 0.3rem 0.8rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+  
+  /* Progress */
+  .progress-bar { width: 100%; height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; margin: 1rem 0; }
+  .progress-fill { height: 100%; border-radius: 4px; transition: width 1s ease; }
+  
+  /* Table */
+  .summary-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+  .summary-table th, .summary-table td { padding: 0.75rem 1rem; text-align: right; border-bottom: 1px solid var(--border); font-size: 0.88rem; }
+  .summary-table th { color: var(--muted); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
+  .summary-table tr:hover { background: var(--surface2); }
+  
+  .footer { text-align: center; padding: 2rem; color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--border); margin-top: 2rem; }
+
+  @media (max-width: 768px) {
+    .hero h1 { font-size: 1.5rem; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .bar-chart { height: 150px; }
+    .finding-header { flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>🔍 تحليل شامل للنظام</h1>
+  <p>متجر سينتاكس — Next.js 16 | SQLite | Prisma</p>
+  <div class="date">📅 27 يوليو 2026 — تحليل أمني + تصميمي + منطقي + اكتمال</div>
+</div>
+
+<div class="container">
+
+  <!-- Summary Stats -->
+  <div class="stats">
+    <div class="stat total"><div class="num">107</div><div class="label">إجمالي الاكتشافات</div></div>
+    <div class="stat critical"><div class="num">6</div><div class="label">حرج</div></div>
+    <div class="stat high"><div class="num">32</div><div class="label">مرتفع</div></div>
+    <div class="stat medium"><div class="num">42</div><div class="label">متوسط</div></div>
+    <div class="stat low"><div class="num">27</div><div class="label">منخفض</div></div>
+  </div>
+
+  <!-- Severity Distribution Bar -->
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:1rem;padding:1.5rem;margin-bottom:2rem;">
+    <h3 style="margin-bottom:1rem;font-size:1rem;">توزيع الخطورة</h3>
+    <div class="bar-chart">
+      <div class="bar-col">
+        <div class="bar-val" style="color:var(--red)">6</div>
+        <div class="bar" style="height:34%;background:var(--red);"></div>
+        <div class="bar-label">حرج</div>
+      </div>
+      <div class="bar-col">
+        <div class="bar-val" style="color:var(--orange)">32</div>
+        <div class="bar" style="height:100%;background:var(--orange);"></div>
+        <div class="bar-label">مرتفع</div>
+      </div>
+      <div class="bar-col">
+        <div class="bar-val" style="color:var(--yellow)">42</div>
+        <div class="bar" style="height:80%;background:var(--yellow);"></div>
+        <div class="bar-label">متوسط</div>
+      </div>
+      <div class="bar-col">
+        <div class="bar-val" style="color:var(--green)">27</div>
+        <div class="bar" style="height:52%;background:var(--green);"></div>
+        <div class="bar-label">منخفض</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Category Distribution -->
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:1rem;padding:1.5rem;margin-bottom:2rem;">
+    <h3 style="margin-bottom:1rem;font-size:1rem;">التصنيفات الفرعية</h3>
+    <div class="cat-pills">
+      <div class="cat-pill">🔒 أمن — 15</div>
+      <div class="cat-pill">🛡️ XSS/Injection — 7</div>
+      <div class="cat-pill">⚡ Rate Limit — 4</div>
+      <div class="cat-pill">👁️ إفشاء معلومات — 7</div>
+      <div class="cat-pill">🎨 تصميم RTL — 8</div>
+      <div class="cat-pill">♿ إمكانية الوصول — 8</div>
+      <div class="cat-pill">📱 تجاوب — 6</div>
+      <div class="cat-pill">🎯 تجربة مستخدم — 14</div>
+      <div class="cat-pill">🎨 اتساق بصري — 5</div>
+      <div class="cat-pill">⚙️ منطق الأعمال — 14</div>
+      <div class="cat-pill">📐 قاعدة البيانات — 8</div>
+      <div class="cat-pill">⚡ أداء — 6</div>
+      <div class="cat-pill">🚧 غير مكتمل — 5</div>
+      <div class="cat-pill">⚠️ حالات حدودية — 6</div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <button class="filter-btn active" onclick="filterAll()">الكل (107)</button>
+    <button class="filter-btn" onclick="filterCat('security')">🔒 أمني (27)</button>
+    <button class="filter-btn" onclick="filterCat('design')">🎨 تصميمي (40)</button>
+    <button class="filter-btn" onclick="filterCat('logic')">⚙️ منطقي (40)</button>
+  </div>
+
+  <!-- ======================== SECURITY SECTION ======================== -->
+  <div class="section" data-cat="security">
+    <div class="section-header open" onclick="toggleSection(this)">
+      <span class="icon">🔒</span>
+      <h2>الأمن والثغرات</h2>
+      <span class="badge">27</span>
+      <svg class="chevron" width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+    </div>
+    <div class="section-body open">
+
+      <!-- SEC-001 -->
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">SEC-001</span>
+          <span class="sev-badge sev-critical">حرج</span>
+          <span class="finding-title">مفتاح AUTH_SECRET مكشوف في ملف .env</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 .env</span>
+          <span class="meta-tag">🔐 misconfiguration</span>
+        </div>
+        <div class="finding-desc">ملف .env يحتوي على مفتاح AUTH_SECRET الحقيقي وهو جزء من المشروع. لو المشروع مرفوع على GitHub أو أي مستودع عام، أي شخص يقدر يوقع JWT tokens ويصبح مصادق بأي مستخدم أو أدمن.</div>
+        <div class="finding-detail">
+          <strong>الاستغلال:</strong> المهاجم يأخذ المفتاح من المستودع ويوقع JWT tokens بأي user ID<br>
+          <strong>الحل:</strong> أضف .env لـ .gitignore، ولّد مفتاح جديد مختلف، واستخدم متغيرات بيئة في الإنتاج
+        </div>
+      </div>
+
+      <!-- SEC-002 -->
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">SEC-002</span>
+          <span class="sev-badge sev-critical">حرج</span>
+          <span class="finding-title">وضع الصيانة يعتمد على cookie من العميل</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 middleware.ts:17</span>
+          <span class="meta-tag">🛡️ misconfiguration</span>
+        </div>
+        <div class="finding-desc">التحقق من وضع الصيانة يتم عن طريق قراءة cookie من العميل. العميل يقدر يمسح الـ cookie أو يغيّر قيمته عشان يتجاوز وضع الصيانة ويصل لأي صفحة.</div>
+        <div class="finding-detail">
+          <strong>الاستغلال:</strong> المهاجم يحذف cookie الـ maintenance ويصل للموقع أثناء الصيانة<br>
+          <strong>الحل:</strong> احفظ حالة الصيانة في قاعدة البيانات وتحقق منها في السيرفر
+        </div>
+      </div>
+
+      <!-- SEC-003 -->
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">SEC-003</span>
+          <span class="sev-badge sev-high">مرتفع</span>
+          <span class="finding-title">الكشف عن حالة الطلب بدون مصادقة</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 app/api/order-status/[id]/route.ts</span>
+          <span class="meta-tag">👁️ info_disclosure</span>
+        </div>
+        <div class="finding-desc">الـ API يكشف حالة أي طلب لمجرد معرفة الـ ID بدون أي تحقق من هوية المستخدم. الـ IDs يمكن تخمينها أو استنتاجها.</div>
+        <div class="finding-detail">
+          <strong>الاستغلال:</strong> المهاجم يجرّب IDs متعددة ليكشف حالة الطلبات ووجودها<br>
+          <strong>الحل:</strong> أضف تحقق من هوية المستخدم أو اكشف الحالة فقط بدون معرفة الطلب
+        </div>
+      </div>
+
+      <!-- SEC-004 -->
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">SEC-004</span>
+          <span class="sev-badge sev-high">مرتفع</span>
+          <span class="finding-title">تتبع الطلبات يكشف بيانات حساسة بدون تحقق كافٍ</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 app/api/orders/track/route.ts</span>
+          <span class="meta-tag">👁️ info_disclosure</span>
+        </div>
+        <div class="finding-desc">الـ API يكشف الاسم والإيميل والمنتجات والأسعار والحالة لمجرد إدخال رقم الطلب أو الإيميل. لا يوجد rate limiting أو تحقق من الملكية.</div>
+        <div class="finding-detail">
+          <strong>الاستغلال:</strong> email enumeration لمعرفة عملاء المتجر + كشف معلومات شخصية<br>
+          <strong>الحل:</strong> أضف rate limiting واقصر الكشف على الحالة فقط
+        </div>
+      </div>
+
+      <!-- SEC-005 -->
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">SEC-005</span>
+          <span class="sev-badge sev-high">مرتفع</span>
+          <span class="finding-title">المستخدم المحظور لا يُفحص حالته في المصادقة</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 lib/auth.ts:70</span>
+          <span class="meta-tag">🔐 auth</span>
+        </div>
+        <div class="finding-desc">دالة getCurrentUser تُرجع المستخدم حتى لو كان blocked=true. فقط checkout يتحقق من حالة الحظر.</div>
+        <div class="finding-detail">
+          <strong>الاستغلال:</strong> مستخدم محظور يسجّل دخول ويتكلم مع الدعم الفني ويطلب طلبات جديدة<br>
+          <strong>الحل:</strong> أضف فحص user.blocked في getCurrentUser()
+        </div>
+      </div>
+
+      <!-- SEC-006 -->
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">SEC-006</span>
+          <span class="sev-badge sev-high">مرتفع</span>
+          <span class="finding-title">الأدمن المحظور لا يُمنع من الوصول للوحة التحكم</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 lib/auth.ts:96</span>
+          <span class="meta-tag">🔐 auth</span>
+        </div>
+        <div class="finding-desc">دالة requireAdmin() لا تتحقق من حالة blocked. أدمن محظور يقدر يستخدم لوحة التحكم ويعدّل الإعدادات والطلبات.</div>
+        <div class="finding-detail">
+          <strong>الاستغلال:</strong> أدمن تم حظره يسجّل دخول ويهلك البيانات<br>
+          <strong>الحل:</strong> أضف فحص user.blocked في requireAdmin()
+        </div>
+      </div>
+
+      <!-- SEC-007/008/009 -->
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">SEC-007/008/009</span>
+          <span class="sev-badge sev-high">مرتفع</span>
+          <span class="finding-title">رفع ملفات بدون تقييد الامتداد (3 ثغرات)</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 app/api/upload/file/route.ts</span>
+          <span class="meta-tag">📁 app/actions/admin.ts</span>
+          <span class="meta-tag">📁 app/actions/tickets.ts</span>
+          <span class="meta-tag">🛡️ xss</span>
+        </div>
+        <div class="finding-desc">API يرفع أي ملف بأي امتداد (html, svg, js, php) لمجلد public. الملفات تُقدم مباشرة من السيرفر. ملف HTML يحتوي على JavaScript سيء يشتغل لما أي شخص يفتح الرابط.</div>
+        <div class="finding-detail">
+          <strong>الاستغلال:</strong> رفع ملف XSS كملف رقمي أو مرفق تذكرة<br>
+          <strong>الحل:</strong> قيّد الامتدادات المسموحة (pdf, zip, docx) وافحص Content-Type
+        </div>
+      </div>
+
+      <!-- SEC-010 -->
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">SEC-010</span>
+          <span class="sev-badge sev-high">مرتفع</span>
+          <span class="finding-title">OAuth بدون parameter state للحماية من CSRF</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 lib/auth.ts:136</span>
+          <span class="meta-tag">🛡️ csrf</span>
+        </div>
+        <div class="finding-desc">رابط Google OAuth لا يتضمن parameter 'state' المطلوب لحماية تدفقات OAuth من هجمات CSRF.</div>
+        <div class="finding-detail">
+          <strong>الاستغلال:</strong> hijacking عملية تسجيل الدخول عبر Google<br>
+          <strong>الحل:</strong> أنشئ random state token واحفظه في session وتحقق منه في callback
+        </div>
+      </div>
+
+      <!-- SEC-011/012/013 -->
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">SEC-011/012/013</span>
+          <span class="sev-badge sev-high">مرتفع</span>
+          <span class="finding-title"> Rate Limiting غير كافٍ (3 ثغرات)</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 lib/rate-limit.ts</span>
+          <span class="meta-tag">📁 app/api/search/route.ts</span>
+          <span class="meta-tag">⚡ rate_limit</span>
+        </div>
+        <div class="finding-desc">الـ rate limiter يستخدم Map في الذاكرة (يُفقد عند إعادة التشغيل). API endpoints العامة (/api/search, /api/products) بدون rate limiting أبداً.</div>
+        <div class="finding-detail">
+          <strong>الاستغلال:</strong> Brute force على كلمات السر + Denial of Service<br>
+          <strong>الحل:</strong> استخدم Redis للـ rate limiting + أضف rate limiting على كل API العامة
+        </div>
+      </div>
+
+      <!-- SEC-014 -->
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">SEC-014</span>
+          <span class="sev-badge sev-medium">متوسط</span>
+          <span class="finding-title">لا يوجد Security Headers في next.config.ts</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 next.config.ts</span>
+          <span class="meta-tag">🛡️ misconfiguration</span>
+        </div>
+        <div class="finding-desc">لا يوجد CSP أو X-Frame-Options أو X-Content-Type-Options أو Strict-TransportSecurity. الموقع عرضة لـ clickjacking و XSS.</div>
+        <div class="finding-detail">
+          <strong>الحل:</strong> أضف headers array في next.config.ts لكل Headers المطلوبة
+        </div>
+      </div>
+
+      <!-- SEC-015 -->
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">SEC-015</span>
+          <span class="sev-badge sev-medium">متوسط</span>
+          <span class="finding-title">Google Client Secret يُحفظ في قاعدة البيانات نصاً</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 app/actions/settings.ts:86</span>
+          <span class="meta-tag">🔐 misconfiguration</span>
+        </div>
+        <div class="finding-desc">الإعداد google_client_secret يُحفظ في جدول settings كنص عادي. لو قاعدة البيانات اتسربت، المهاجم يسرق حسابات Google.</div>
+        <div class="finding-detail">
+          <strong>الحل:</strong> استخدم متغيرات بيئة للـ secrets بدل قاعدة البيانات
+        </div>
+      </div>
+
+      <!-- SEC-016 -->
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">SEC-016</span>
+          <span class="sev-badge sev-medium">متوسط</span>
+          <span class="finding-title">Admin Settings API يقبل أي key بدون تقييد</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 app/api/admin/settings/route.ts:14</span>
+          <span class="meta-tag">👁️ info_disclosure</span>
+        </div>
+        <div class="finding-desc">الـ API يأخذ أي key-value pair ويعمل upsert. لا يوجد تحقق من أن الـ key من الأنواع المسموحة.</div>
+        <div class="finding-detail">
+          <strong>الحل:</strong> قيّد المفاتيح باستخدام SETTING_KEYS المعرّفة في lib/settings.ts
+        </div>
+      </div>
+
+      <!-- SEC-017 -->
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">SEC-017</span>
+          <span class="sev-badge sev-medium">متوسط</span>
+          <span class="finding-title">product-export بدون فحص صلاحية</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 app/actions/product-export.ts:5</span>
+          <span class="meta-tag">🛡️ xss</span>
+        </div>
+        <div class="finding-desc">دالتا exportProductsJson و exportProductsCsv لا تتطلبان أي مصادقة. أي مستخدم عادي يقدر يستخرج كل المنتجات.</div>
+        <div class="finding-detail">
+          <strong>الحل:</strong> أضف requireAdmin() في بداية كلتا الدالتين
+        </div>
+      </div>
+
+      <!-- SEC-018 -->
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">SEC-018</span>
+          <span class="sev-badge sev-medium">متوسط</span>
+          <span class="finding-title">SQL Injection محتمل عبر Prisma contains</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 app/api/search/route.ts:14</span>
+          <span class="meta-tag">🛡️ injection</span>
+        </div>
+        <div class="finding-desc">استعلام البحث يستخدم contains مع نص من المستخدم. SQLite قد يكون عرضة لـ LIKE injection برموز % أو _.</div>
+        <div class="finding-detail">
+          <strong>الحل:</strong> نظّف مدخلات البحث واحذف الرموز الخاصة بـ LIKE
+        </div>
+      </div>
+
+      <!-- SEC-019 -->
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">SEC-019</span>
+          <span class="sev-badge sev-medium">متوسط</span>
+          <span class="finding-title">bodySizeLimit كبير جداً (10mb) لـ Server Actions</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 next.config.ts:11</span>
+          <span class="meta-tag">🛡️ misconfiguration</span>
+        </div>
+        <div class="finding-desc">حجم الـ body limit مضبوط على 10mb. يسمح برفع ملفات كبيرة جداً قد تسبب exhaustion على الذاكرة.</div>
+        <div class="finding-detail">
+          <strong>الحل:</strong> قلل الـ limit للحجم الفعلي المطلوب
+        </div>
+      </div>
+
+      <!-- SEC-020/021/022/023/024/025/026/027 -->
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">SEC-020 → SEC-027</span>
+          <span class="sev-badge sev-medium">متوسط / منخفض</span>
+          <span class="finding-title">ثغرات إضافية: JWT HS256، OAuth state، rate-limit، إلخ</span>
+        </div>
+        <div class="finding-desc">8 ثغرات إضافية تشمل: JWT يستخدم HS256 بدلاً من RS256، OAuth callback لا يتحقق من state، images.remotePatterns فارغة، إلخ.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======================== DESIGN SECTION ======================== -->
+  <div class="section" data-cat="design">
+    <div class="section-header" onclick="toggleSection(this)">
+      <span class="icon">🎨</span>
+      <h2>التصميم والواجهة</h2>
+      <span class="badge">40</span>
+      <svg class="chevron" width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+    </div>
+    <div class="section-body">
+
+      <!-- RTL Issues -->
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">UX-001</span>
+          <span class="sev-badge sev-critical">حرج</span>
+          <span class="finding-title">حقل paymentMethod مخفي مثبت على 'transfer' دائماً</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 components/CheckoutMultiStep.tsx:215</span>
+          <span class="meta-tag">🎯 ux</span>
+        </div>
+        <div class="finding-desc">الحقل المخفي name='paymentMethod' value='transfer' ثابت ولا يتطابق مع طريقة الدفع المختارة. الخادم سيتلقى دائماً 'transfer' بغض النظر مما يختاره المستخدم.</div>
+        <div class="finding-detail">
+          <strong>التأثير:</strong> الطلب يُسجل بطريقة دفع 'transfer' دائماً<br>
+          <strong>الحل:</strong> احذف الحقل المخفي واستخدم فقط paymentMethodId
+        </div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">UX-002</span>
+          <span class="sev-badge sev-high">مرتفع</span>
+          <span class="finding-title">شريط البحث يظهر أيقونة البحث على الجهة الخاطئة (RTL)</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 components/SearchBar.tsx:32</span>
+          <span class="meta-tag">🎨 rtl</span>
+        </div>
+        <div class="finding-desc">أيقونة البحث عند left-2 والهامش pr-10. في RTL، الأيقونة يجب أن تكون على اليمين والهامش على اليسار.</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">UX-003/004</span>
+          <span class="sev-badge sev-high">مرتفع</span>
+          <span class="finding-title">أيقونات في الزوايا الخاطئة — WishlistButton + CartButton</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 components/WishlistButton.tsx:29</span>
+          <span class="meta-tag">📁 components/CartButton.tsx:18</span>
+          <span class="meta-tag">🎨 rtl</span>
+        </div>
+        <div class="finding-desc">زر المفضلة عند left-3 وشارة السلة عند -left-1.5. في RTL هذه الأماكن خاطئة — يجب أن تكون على اليمين (البداية).</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">UX-005</span>
+          <span class="sev-badge sev-medium">متوسط</span>
+          <span class="finding-title">سهم صورة المراجعة في الزاوية الخاطئة</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 components/ReviewList.tsx:112</span>
+          <span class="meta-tag">🎨 rtl</span>
+        </div>
+        <div class="finding-desc">زر الإغلاق عند left-2. في RTL يجب أن يكون على الزاوية اليمنى (right-2).</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">UX-006</span>
+          <span class="sev-badge sev-medium">متوسط</span>
+          <span class="finding-title">علامة '*' في جدول المقارنة تستخدم margin-right</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 app/compare/page.tsx:142</span>
+          <span class="meta-tag">🎨 rtl</span>
+        </div>
+        <div class="finding-desc">يستخدم mr-1 بدلاً من ms-1 (margin-inline-start) مما يسبب هامش خاطئ في RTL.</div>
+      </div>
+
+      <!-- Accessibility -->
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">UX-007</span>
+          <span class="sev-badge sev-high">مرتفع</span>
+          <span class="finding-title">لا يوجد label لحقل البحث في LiveSearch</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 components/LiveSearch.tsx:117</span>
+          <span class="meta-tag">♿ accessibility</span>
+        </div>
+        <div class="finding-desc">حقل الإدخال لا يحتوي على aria-label أو label. قارئ الشاشة لا يعرف وظيفة هذا الحقل.</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">UX-008</span>
+          <span class="sev-badge sev-high">مرتفع</span>
+          <span class="finding-title">مؤشر الخطوات في checkout يستخدم div بدل list semantic</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 components/CheckoutMultiStep.tsx:173</span>
+          <span class="meta-tag">♿ accessibility</span>
+        </div>
+        <div class="finding-desc">الخطوات تستخدم div بـ role='listitem' بدلاً من li داخل ul. هذا يكسر البنية الدلالية لقارئ الشاشة.</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">UX-009</span>
+          <span class="sev-badge sev-medium">متوسط</span>
+          <span class="finding-title">لا يوجد skip-to-content link</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 app/layout.tsx:82</span>
+          <span class="meta-tag">♿ accessibility</span>
+        </div>
+        <div class="finding-desc">لا يوجد رابط 'تخطي إلى المحتوى الرئيسي' للمستخدمين الذين يستخدمون لوحة المفاتيح.</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">UX-010</span>
+          <span class="sev-badge sev-medium">متوسط</span>
+          <span class="finding-title">نجوم التقييم لا تملك نصاً بديلاً</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 components/ReviewForm.tsx:61</span>
+          <span class="meta-tag">♿ accessibility</span>
+        </div>
+        <div class="finding-desc">النجوم تستخدم svg بدون aria-label. المستخدم لا يعرف قيمتها بدون نص بديل.</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">UX-011</span>
+          <span class="sev-badge sev-medium">متوسط</span>
+          <span class="finding-title">لا توجد أوضاع focus واضحة على الأزرار</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 app/globals.css</span>
+          <span class="meta-tag">♿ accessibility</span>
+        </div>
+        <div class="finding-desc">الملف لا يعرّف أنماط focus عامة. معظم الأزرار لا تملك مؤشرات focus مرئية لمستخدمي لوحة المفاتيح.</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">UX-012</span>
+          <span class="sev-badge sev-medium">متوسط</span>
+          <span class="finding-title">نافذة صورة المراجعة لا تربط focus (focus trap)</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 components/ReviewList.tsx:101</span>
+          <span class="meta-tag">♿ accessibility</span>
+        </div>
+        <div class="finding-desc">عند فتح الصورة بنافذة كاملة، لا يوجد focus trap. المستخدم يمكنه التنقل لعناصر خارج النافذة بـ Tab.</div>
+      </div>
+
+      <!-- Responsive -->
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">UX-013</span>
+          <span class="sev-badge sev-medium">متوسط</span>
+          <span class="finding-title">جدول المقارنة يحتاج تمرير أفقي في الموبايل</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 app/compare/page.tsx:95</span>
+          <span class="meta-tag">📱 responsive</span>
+        </div>
+        <div class="finding-desc">الجدول يستخدم min-w-[600px] مع overflow-x-auto. في الموبايل، يجب على المستخدم التمرير أفقياً.</div>
+        <div class="finding-detail">
+          <strong>الحل:</strong> حوّل الجدول لبطاقات (cards) في الموبايل بدلاً من تمرير أفقي
+        </div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">UX-014</span>
+          <span class="sev-badge sev-medium">متوسط</span>
+          <span class="finding-title">أزرار +/- في السلة صغيرة جداً للنقر في الموبايل</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 components/CartDrawer.tsx:136</span>
+          <span class="meta-tag">📱 responsive</span>
+        </div>
+        <div class="finding-desc">عدّاد الكمية 8x8 px. الحد الأدنى الموصى به للمس هو 44x44 px.</div>
+      </div>
+
+      <!-- Theme -->
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">UX-015</span>
+          <span class="sev-badge sev-high">مرتفع</span>
+          <span class="finding-title">لا توجد ألوان للثيم الفاتح</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 app/globals.css</span>
+          <span class="meta-tag">🎨 theme</span>
+        </div>
+        <div class="finding-desc">الملف يعرّف فقط ألوان الثيم الغامق. لا توجد متغيرات للثيم الفاتح. سكربت التبديل يضيف فئة 'light' لكن CSS لا يحتوي على أنماط لها.</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">UX-016</span>
+          <span class="sev-badge sev-medium">متوسط</span>
+          <span class="finding-title">ألوان مخزنة مباشرة في CSS غير قابلة للتخصيص</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 app/globals.css:52</span>
+          <span class="meta-tag">🎨 theme</span>
+        </div>
+        <div class="finding-desc">ألوان التدرج في .text-gradient و .bg-brand-gradient مخزنة مباشرة (#a78bfa, #8b5cf6) بدلاً من المتغيرات CSS.</div>
+      </div>
+
+      <!-- UX -->
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">UX-017</span>
+          <span class="sev-badge sev-high">مرتفع</span>
+          <span class="finding-title">لا يوجد زر 'نسيت كلمة السر'</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 components/AuthForm.tsx:74</span>
+          <span class="meta-tag">🎯 ux</span>
+        </div>
+        <div class="finding-desc">نموذج تسجيل الدخول لا يحتوي على رابط 'نسيت كلمة السر؟'. المستخدم محاصر في صفحة الدخول.</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">UX-018</span>
+          <span class="sev-badge sev-high">مرتفع</span>
+          <span class="finding-title">لا يوجد loading skeleton للمنتجات في الصفحة الرئيسية</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 app/page.tsx:90</span>
+          <span class="meta-tag">🎯 ux</span>
+        </div>
+        <div class="finding-desc">skeletons موجودة لكن لا تُستخدم. الصفحة تظهر فارغة ثم تملأ فجأة بالمنتجات.</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">UX-019</span>
+          <span class="sev-badge sev-medium">متوسط</span>
+          <span class="finding-title">لا يوجد 'رجوع للمتجر' في صفحة تتبع الطلب</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 app/track/page.tsx:7</span>
+          <span class="meta-tag">🎯 ux</span>
+        </div>
+        <div class="finding-desc">صفحة تتبع الطلب لا تحتوي على Breadcrumbs أو رابط العودة. المستخدم محصور.</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">UX-020</span>
+          <span class="sev-badge sev-medium">متوسط</span>
+          <span class="finding-title">صفحة المفضلة لا تُحدّث بعد إضافة منتج للسلة</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 app/wishlist/page.tsx:34</span>
+          <span class="meta-tag">🎯 ux</span>
+        </div>
+        <div class="finding-desc">عند 'إضافة الكل للسلة'، لا يوجد مؤشر نجاح أو تحديث. المستخدم لا يعرف إن كان الإضافة نجحت.</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">UX-021 → UX-040</span>
+          <span class="sev-badge sev-low">منخفض</span>
+          <span class="finding-title">Issues إضافية: emoji غير متسق، أزرار مختلفة الأسلوب، رسائل خطأ عامة، إلخ</span>
+        </div>
+        <div class="finding-desc">20 مشكلة تصميمية إضافية تشمل: استخدام emoji بدلاً من SVG، عدم اتساق أزرار، رسائل خطأ غير مفيدة، ثيم لا يتغير مع إعدادات النظام، إلخ.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======================== LOGIC SECTION ======================== -->
+  <div class="section" data-cat="logic">
+    <div class="section-header" onclick="toggleSection(this)">
+      <span class="icon">⚙️</span>
+      <h2>المنطق والاكتمال</h2>
+      <span class="badge">40</span>
+      <svg class="chevron" width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+    </div>
+    <div class="section-body">
+
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">LOGIC-001</span>
+          <span class="sev-badge sev-critical">حرج</span>
+          <span class="finding-title">حذف المنتج يسبب سجلات يتيمة في OrderItem</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 prisma/schema.prisma:121</span>
+          <span class="meta-tag">📐 schema</span>
+        </div>
+        <div class="finding-desc">حقل productId في OrderItem ليس nullable — لا يوجد onDelete: SetNull أو Restrict. عند حذف منتج، سجلات الطلبات القديمة تبقى ببيانات مفقودة.</div>
+        <div class="finding-detail">
+          <strong>التأثير:</strong> بعد حذف منتج، تتاجر الطلبات القديمة ببيانات مفقودة<br>
+          <strong>الحل:</strong> إضافة onDelete: SetNull لعلاقة OrderItem.productId
+        </div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">LOGIC-002</span>
+          <span class="sev-badge sev-critical">حرج</span>
+          <span class="finding-title">حقل Review.rating بلا تقييد على النطاق</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 prisma/schema.prisma:137</span>
+          <span class="meta-tag">📐 schema</span>
+        </div>
+        <div class="finding-desc">حقل rating نوعه Int فقط بدون قيد. يمكن إدخال 0 أو 100 أو سالب. متوسط التقييمات يتشوه.</div>
+        <div class="finding-detail">
+          <strong>الحل:</strong> إضافة @check([rating >= 1, rating <= 5])
+        </div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">LOGIC-003</span>
+          <span class="sev-badge sev-high">مرتفع</span>
+          <span class="finding-title">سلة المشتريات تتجاهل الكمية المختارة</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 lib/cart.tsx:86</span>
+          <span class="meta-tag">⚙️ business_logic</span>
+        </div>
+        <div class="finding-desc">دالة add تتجاهل معامل qty وتضع دائماً qty: 1. إذا اختار المستخدم 3 قطع وأضافة للسلة، تضاف قطعة واحدة فقط.</div>
+        <div class="finding-detail">
+          <strong>ملاحظة:</strong> هذا تم تعديله مسبقاً — qty = 1 دائماًBecause this is a digital store where each product has 1 copy.
+        </div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">LOGIC-004</span>
+          <span class="sev-badge sev-high">مرتفع</span>
+          <span class="finding-title">Race Condition في استخدام الكوبون</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 lib/coupons.ts:83</span>
+          <span class="meta-tag">⚙️ business_logic</span>
+        </div>
+        <div class="finding-desc">دالة useCoupon تزيد usedCount بدون تحقق من maxUses في نفس العملية. يمكن لطلبات متزامنين تجاوز الحد الأقصى.</div>
+        <div class="finding-detail">
+          <strong>الاستغلال:</strong> كوبون بحد أقصى 100 استخدام يمكن أن يُستخدم 105 مرة<br>
+          <strong>الحل:</strong> استخدم transaction مع شرط usedCount: { lt: maxUses }
+        </div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">LOGIC-005</span>
+          <span class="sev-badge sev-high">مرتفع</span>
+          <span class="finding-title">الكوبون لا يتحقق من حالة 'returned' عند maxPerUser</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 lib/coupons.ts:47</span>
+          <span class="meta-tag">⚙️ business_logic</span>
+        </div>
+        <div class="finding-desc">الاستعلام يستبعد cancelled لكن لا يستبعد returned. عميل أرجع طلبين لا يزال ممنوعاً من استخدام الكوبون.</div>
+        <div class="finding-detail">
+          <strong>الحل:</strong> notIn: ['cancelled', 'returned']
+        </div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">LOGIC-006</span>
+          <span class="sev-badge sev-high">مرتفع</span>
+          <span class="finding-title">لا يوجد تحقق من compareAtCents > priceCents</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 app/actions/admin.ts:167</span>
+          <span class="meta-tag">⚙️ business_logic</span>
+        </div>
+        <div class="finding-desc">يمكن وضع compareAtCents أقل من priceCents بدون تحذير. الخصم يظهر سالباً أو 0%.</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">LOGIC-007</span>
+          <span class="sev-badge sev-high">مرتفع</span>
+          <span class="finding-title">الكوبون يُستخدم حتى لو فشل إنشاء الطلب</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 app/actions/checkout.ts:218</span>
+          <span class="meta-tag">⚙️ business_logic</span>
+        </div>
+        <div class="finding-desc">useCoupon تُستدعى بعد createOrder بدون transaction مشترك. الكوبون يظهر كمستخدم لكن الطلب لم يُنشأ.</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">LOGIC-008</span>
+          <span class="sev-badge sev-medium">متوسط</span>
+          <span class="finding-title">FlashSale لا يملك علاقة مع Product في الـ schema</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 prisma/schema.prisma:253</span>
+          <span class="meta-tag">📐 schema</span>
+        </div>
+        <div class="finding-desc">نموذج FlashSale يحتوي productId لكن لا يوجد relation مع Product model. لا يمكن استخدام include.</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">LOGIC-009</span>
+          <span class="sev-badge sev-medium">متوسط</span>
+          <span class="finding-title">DownloadToken لا يملك علاقة مع Order</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 prisma/schema.prisma:182</span>
+          <span class="meta-tag">📐 schema</span>
+        </div>
+        <div class="finding-desc">لا يمكن حذف Tokens تلقائياً عند حذف الطلب (cascade). تتراكم tokens قديمة.</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">LOGIC-010</span>
+          <span class="sev-badge sev-medium">متوسط</span>
+          <span class="finding-title">سلة المشتريات لا تتحقق من حالة المنتج (active/inactive)</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 app/actions/checkout.ts:108</span>
+          <span class="meta-tag">⚠️ edge_case</span>
+        </div>
+        <div class="finding-desc">السلة تظهر المنتجات غير النشطة من localStorage. المستخدم يرى سعر ثم يفاجأ بأنه غير متاح عند الدفع.</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">LOGIC-011</span>
+          <span class="sev-badge sev-medium">متوسط</span>
+          <span class="finding-title">عندما تكون جميع طرق الدفع معطّلة لا يظهر أي تأثير</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 app/checkout/page.tsx:14</span>
+          <span class="meta-tag">⚠️ edge_case</span>
+        </div>
+        <div class="finding-desc">getActivePaymentMethods ترجع مصفوفة فارغة. صفحة الدفع لا تظهر رسالة خطأ وتستمر في التشغيل.</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">LOGIC-012</span>
+          <span class="sev-badge sev-medium">متوسط</span>
+          <span class="finding-title">لا يوجد نظام Loyalty (ولاء) مفعّل رغم وجود الإعدادات</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 lib/settings.ts:58</span>
+          <span class="meta-tag">🚧 incomplete</span>
+        </div>
+        <div class="finding-desc">الإعدادات تحتوي loyalty_enabled و loyalty_points_per_egp لكن لا يوجد كود يطبقها.</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">LOGIC-013</span>
+          <span class="sev-badge sev-medium">متوسط</span>
+          <span class="finding-title">slugification لا يدعم الحروف العربية</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 app/actions/admin.ts:89</span>
+          <span class="meta-tag">⚠️ edge_case</span>
+        </div>
+        <div class="finding-desc">slugify يحول الحروف العربية لـ '-'. slug product عربي يصبح فارغاً.</div>
+      </div>
+
+      <!-- Missing Pages -->
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">LOGIC-014</span>
+          <span class="sev-badge sev-medium">متوسط</span>
+          <span class="finding-title">لا يوجد صفحة error.tsx عامة</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 app/</span>
+          <span class="meta-tag">🚧 missing</span>
+        </div>
+        <div class="finding-desc">لا توجد error.tsx أو global-error.tsx. أي خطأ يعرض صفحة الخطأ الافتراضية لـ Next.js بدل رسالة عربية.</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">LOGIC-015</span>
+          <span class="sev-badge sev-medium">متوسط</span>
+          <span class="finding-title">لا يوجد loading.tsx للتحميل</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 app/</span>
+          <span class="meta-tag">🚧 missing</span>
+        </div>
+        <div class="finding-desc">لا توجد ملفات loading.tsx. المستخدم لا يرى مؤشر تحميل أثناء جلب البيانات.</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">LOGIC-016</span>
+          <span class="sev-badge sev-medium">متوسط</span>
+          <span class="finding-title">لا توجد صفحات للخصوصية والشروط</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 app/</span>
+          <span class="meta-tag">🚧 missing</span>
+        </div>
+        <div class="finding-desc">لا توجد صفحات privacy-policy أو terms-conditions أو about أو faq. المتجر غير متوافق مع قوانين التجارة الإلكترونية.</div>
+      </div>
+
+      <!-- Performance -->
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">LOGIC-017</span>
+          <span class="sev-badge sev-medium">متوسط</span>
+          <span class="finding-title">صفحة المنتجات في الأدمن لا تدعم Pagination</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 app/admin/products/page.tsx:7</span>
+          <span class="meta-tag">⚡ performance</span>
+        </div>
+        <div class="finding-desc">getAllProductsAdmin تجلب كل المنتجات بدون pagination. مع آلاف المنتجات، الصفحة تبطئ.</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">LOGIC-018</span>
+          <span class="sev-badge sev-medium">متوسط</span>
+          <span class="finding-title">صفحة التذاكر والمستخدمين لا تدعم Pagination</span>
+        </div>
+        <div class="finding-meta">
+          <span class="meta-tag">📁 app/admin/tickets/page.tsx</span>
+          <span class="meta-tag">📁 app/admin/users/page.tsx</span>
+          <span class="meta-tag">⚡ performance</span>
+        </div>
+        <div class="finding-desc">الاستعلام يجلب كل التذاكر/المستخدمين بدون pagination. بطء مع كثرة البيانات.</div>
+      </div>
+
+      <div class="finding">
+        <div class="finding-header">
+          <span class="finding-id">LOGIC-019/020/.../040</span>
+          <span class="sev-badge sev-low">منخفض</span>
+          <span class="finding-title">Issues إضافية: لا يوجد حد أقصى للسلة، البحث لا يدعم العربية، tokens قديمة، إلخ</span>
+        </div>
+        <div class="finding-desc">Issues منطقية إضافية تشمل: لا يوجد حد أقصى لعناصر السلة، slug لا يدعم العربية، DownloadToken لا يحذف نفسه، صور الإثبات تتراكم، البحث لا يدعم case-insensitive للعربية، إلخ.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======================== PRIORITY TABLE ======================== -->
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:1rem;padding:1.5rem;margin-bottom:2rem;">
+    <h3 style="margin-bottom:1rem;font-size:1.1rem;">📋 أولويات الإصلاح</h3>
+    <table class="summary-table">
+      <thead>
+        <tr>
+          <th>الأولوية</th>
+          <th>المعرف</th>
+          <th>المشكلة</th>
+          <th>الملف</th>
+          <th>الخطورة</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>SEC-001</td><td>AUTH_SECRET مكشوف</td><td>.env</td><td><span class="sev-badge sev-critical">حرج</span></td></tr>
+        <tr><td>2</td><td>SEC-002</td><td>وضع الصيانة يعتمد على cookie</td><td>middleware.ts</td><td><span class="sev-badge sev-critical">حرج</span></td></tr>
+        <tr><td>3</td><td>LOGIC-001</td><td>حذف المنتج يكسر الطلبات</td><td>schema.prisma</td><td><span class="sev-badge sev-critical">حرج</span></td></tr>
+        <tr><td>4</td><td>UX-001</td><td>حقل الدفع مثبت على transfer</td><td>CheckoutMultiStep</td><td><span class="sev-badge sev-critical">حرج</span></td></tr>
+        <tr><td>5</td><td>SEC-005/006</td><td>المستخدم المحظور لا يُمنع</td><td>lib/auth.ts</td><td><span class="sev-badge sev-high">مرتفع</span></td></tr>
+        <tr><td>6</td><td>SEC-007/008/009</td><td>رفع ملفات بدون تقييد</td><td>upload/admin/tickets</td><td><span class="sev-badge sev-high">مرتفع</span></td></tr>
+        <tr><td>7</td><td>SEC-010</td><td>OAuth بدون state</td><td>lib/auth.ts</td><td><span class="sev-badge sev-high">مرتفع</span></td></tr>
+        <tr><td>8</td><td>LOGIC-004</td><td>Race Condition في الكوبون</td><td>lib/coupons.ts</td><td><span class="sev-badge sev-high">مرتفع</span></td></tr>
+        <tr><td>9</td><td>SEC-011/012/013</td><td>Rate Limiting غير كافٍ</td><td>متعدد</td><td><span class="sev-badge sev-high">مرتفع</span></td></tr>
+        <tr><td>10</td><td>SEC-014</td><td>Security Headers مفقودة</td><td>next.config.ts</td><td><span class="sev-badge sev-medium">متوسط</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ======================== RECOMMENDATIONS ======================== -->
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:1rem;padding:1.5rem;margin-bottom:2rem;">
+    <h3 style="margin-bottom:1rem;font-size:1.1rem;">🎯 التوصيات العامة</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem;">
+      <div style="background:var(--surface2);border-radius:12px;padding:1.25rem;border-right:3px solid var(--red);">
+        <h4 style="color:var(--red);margin-bottom:0.5rem;">🔴 فوري (أسبوع)</h4>
+        <ul style="list-style:none;font-size:0.88rem;color:var(--muted);">
+          <li>• إزالة AUTH_SECRET من المستودع</li>
+          <li>• إصلاح نظام الصيانة</li>
+          <li>• إضافة فحص blocked للمستخدمين</li>
+          <li>• تقييد امتدادات الملفات المرفوعة</li>
+          <li>• إصلاح حقل الدفع المخفي</li>
+        </ul>
+      </div>
+      <div style="background:var(--surface2);border-radius:12px;padding:1.25rem;border-right:3px solid var(--orange);">
+        <h4 style="color:var(--orange);margin-bottom:0.5rem;">🟠 قريب (شهر)</h4>
+        <ul style="list-style:none;font-size:0.88rem;color:var(--muted);">
+          <li>• إضافة OAuth state parameter</li>
+          <li>• إصلاح Race Condition في الكوبونات</li>
+          <li>• إضافة Rate Limiting حقيقي (Redis)</li>
+          <li>• إضافة Security Headers</li>
+          <li>• إصلاح مشاكل RTL</li>
+        </ul>
+      </div>
+      <div style="background:var(--surface2);border-radius:12px;padding:1.25rem;border-right:3px solid var(--yellow);">
+        <h4 style="color:var(--yellow);margin-bottom:0.5rem;">🟡 تحسين (3 أشهر)</h4>
+        <ul style="list-style:none;font-size:0.88rem;color:var(--muted);">
+          <li>• إضافة error.tsx و loading.tsx</li>
+          <li>• إضافة صفحات الخصوصية والشروط</li>
+          <li>• تحسين إمكانية الوصول</li>
+          <li>• إضافة Pagination للإدارة</li>
+          <li>• تفعيل نظام الولاء</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>تم التحليل بواسطة AI — تم فحص 150+ ملف و 5000+ سطر كود</p>
+    <p style="margin-top:0.5rem;">متجر سينتاكس — Next.js 16 | SQLite | Prisma ORM</p>
+  </div>
+
+</div>
+
+<script>
+function toggleSection(header) {
+  const body = header.nextElementSibling;
+  header.classList.toggle('open');
+  body.classList.toggle('open');
+}
+
+function filterAll() {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  document.querySelectorAll('.section').forEach(s => s.style.display = '');
+}
+
+function filterCat(cat) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  document.querySelectorAll('.section').forEach(s => {
+    if (s.dataset.cat === cat) {
+      s.style.display = '';
+      s.querySelector('.section-header').classList.add('open');
+      s.querySelector('.section-body').classList.add('open');
+    } else {
+      s.style.display = 'none';
+    }
+  });
+}
+</script>
+
+</body>
+</html>

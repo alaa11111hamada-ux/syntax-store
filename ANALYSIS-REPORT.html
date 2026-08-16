@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تقرير تحليل النظام — متجر سينتاكس</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
+  :root {
+    --bg: #0a0a0f; --surface: #12121a; --surface2: #1a1a25;
+    --border: #2a2a3a; --fg: #e8e8f0; --muted: #8888a0;
+    --red: #ef4444; --orange: #f97316; --yellow: #eab308;
+    --green: #22c55e; --blue: #3b82f6; --purple: #a855f7;
+    --critical-bg: #ef444415; --high-bg: #f9731615;
+    --medium-bg: #eab30815; --low-bg: #3b82f615;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--fg); line-height: 1.7; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+
+  /* Hero */
+  .hero { text-align: center; padding: 4rem 2rem; background: linear-gradient(135deg, #7c3aed20, #3b82f620, #06b6d420); border-radius: 2rem; margin-bottom: 3rem; border: 1px solid var(--border); }
+  .hero h1 { font-size: 2.5rem; font-weight: 900; background: linear-gradient(135deg, #a855f7, #3b82f6, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.5rem; }
+  .hero .subtitle { color: var(--muted); font-size: 1.1rem; }
+  .hero .date { color: var(--muted); font-size: 0.9rem; margin-top: 1rem; }
+
+  /* Stats Grid */
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 3rem; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 1rem; padding: 1.5rem; text-align: center; }
+  .stat-card .number { font-size: 2.5rem; font-weight: 900; }
+  .stat-card .label { color: var(--muted); font-size: 0.85rem; margin-top: 0.25rem; }
+  .stat-critical .number { color: var(--red); }
+  .stat-high .number { color: var(--orange); }
+  .stat-medium .number { color: var(--yellow); }
+  .stat-low .number { color: var(--blue); }
+
+  /* Sections */
+  .section { margin-bottom: 3rem; }
+  .section-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid var(--border); }
+  .section-header .icon { font-size: 2rem; }
+  .section-header h2 { font-size: 1.5rem; font-weight: 800; }
+  .section-header .count { background: var(--surface2); border: 1px solid var(--border); border-radius: 2rem; padding: 0.25rem 1rem; font-size: 0.85rem; color: var(--muted); }
+
+  /* Issue Card */
+  .issue { background: var(--surface); border: 1px solid var(--border); border-radius: 1rem; padding: 1.5rem; margin-bottom: 1rem; transition: border-color 0.2s; }
+  .issue:hover { border-color: var(--purple); }
+  .issue-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
+  .severity { display: inline-block; padding: 0.15rem 0.75rem; border-radius: 2rem; font-size: 0.75rem; font-weight: 700; }
+  .severity-critical { background: var(--critical-bg); color: var(--red); border: 1px solid #ef444440; }
+  .severity-high { background: var(--high-bg); color: var(--orange); border: 1px solid #f9731640; }
+  .severity-medium { background: var(--medium-bg); color: var(--yellow); border: 1px solid #eab30840; }
+  .severity-low { background: var(--low-bg); color: var(--blue); border: 1px solid #3b82f640; }
+  .issue-title { font-weight: 700; font-size: 1rem; }
+  .issue-file { font-family: monospace; font-size: 0.8rem; color: var(--purple); background: var(--surface2); padding: 0.2rem 0.5rem; border-radius: 0.5rem; direction: ltr; text-align: left; display: inline-block; margin-bottom: 0.5rem; }
+  .issue-desc { color: var(--muted); font-size: 0.9rem; line-height: 1.8; }
+  .issue-desc strong { color: var(--fg); }
+
+  /* Category Tabs */
+  .tabs { display: flex; gap: 0.5rem; margin-bottom: 2rem; flex-wrap: wrap; }
+  .tab { padding: 0.5rem 1.25rem; border-radius: 2rem; border: 1px solid var(--border); background: var(--surface); color: var(--muted); cursor: pointer; font-family: inherit; font-size: 0.9rem; transition: all 0.2s; }
+  .tab:hover, .tab.active { background: var(--purple); color: white; border-color: var(--purple); }
+
+  /* Filter */
+  .filter-bar { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .filter-btn { padding: 0.35rem 1rem; border-radius: 2rem; border: 1px solid var(--border); background: var(--surface); color: var(--muted); cursor: pointer; font-family: inherit; font-size: 0.8rem; transition: all 0.2s; }
+  .filter-btn:hover, .filter-btn.active { border-color: var(--purple); color: var(--fg); }
+
+  /* Summary Table */
+  .summary-table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; }
+  .summary-table th, .summary-table td { padding: 0.75rem 1rem; text-align: right; border-bottom: 1px solid var(--border); }
+  .summary-table th { background: var(--surface2); color: var(--muted); font-weight: 600; font-size: 0.85rem; }
+  .summary-table td { font-size: 0.9rem; }
+  .summary-table tr:hover td { background: var(--surface); }
+
+  /* Progress Bar */
+  .progress-container { margin-bottom: 2rem; }
+  .progress-bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: var(--surface2); }
+  .progress-segment { transition: width 0.5s; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .hero h1 { font-size: 1.75rem; }
+    .container { padding: 1rem; }
+  }
+
+  /* Print */
+  @media print {
+    body { background: white; color: black; }
+    .issue { border: 1px solid #ddd; }
+    .tabs, .filter-bar { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- Hero -->
+<div class="hero">
+  <h1>تقرير تحليل النظام الشامل</h1>
+  <div class="subtitle">متجر سينتاكس — متجر إلكتروني للمنتجات الرقمية</div>
+  <div class="date">التاريخ: 27 يوليو 2026 · Next.js 16 · Prisma 7 · SQLite</div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+  <div class="stat-card stat-critical">
+    <div class="number">14</div>
+    <div class="label">حرج (Critical)</div>
+  </div>
+  <div class="stat-card stat-high">
+    <div class="number">21</div>
+    <div class="label">عالي (High)</div>
+  </div>
+  <div class="stat-card stat-medium">
+    <div class="number">25</div>
+    <div class="label">متوسط (Medium)</div>
+  </div>
+  <div class="stat-card stat-low">
+    <div class="number">22</div>
+    <div class="label">منخفض (Low)</div>
+  </div>
+</div>
+
+<!-- Progress -->
+<div class="progress-container">
+  <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem;font-size:0.85rem;">
+    <span style="color:var(--muted)">إجمالي المشكلات: 82</span>
+    <span style="color:var(--muted)">الأمان: 37 · الأخطاء: 35 · التصميم: 47</span>
+  </div>
+  <div class="progress-bar">
+    <div class="progress-segment" style="width:17%;background:var(--red)"></div>
+    <div class="progress-segment" style="width:26%;background:var(--orange)"></div>
+    <div class="progress-segment" style="width:30%;background:var(--yellow)"></div>
+    <div class="progress-segment" style="width:27%;background:var(--blue)"></div>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tab active" onclick="showSection('all')">الكل</button>
+  <button class="tab" onclick="showSection('security')">الأمان والثغرات</button>
+  <button class="tab" onclick="showSection('bugs')">الأخطاء والمنطق</button>
+  <button class="tab" onclick="showSection('design')">التصميم والتجربة</button>
+</div>
+
+<!-- Filter -->
+<div class="filter-bar">
+  <button class="filter-btn active" onclick="filterSeverity('all', this)">الكل</button>
+  <button class="filter-btn" onclick="filterSeverity('critical', this)">🔴 حرج</button>
+  <button class="filter-btn" onclick="filterSeverity('high', this)">🟠 عالي</button>
+  <button class="filter-btn" onclick="filterSeverity('medium', this)">🟡 متوسط</button>
+  <button class="filter-btn" onclick="filterSeverity('low', this)">🔵 منخفض</button>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SECURITY SECTION -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="section" data-category="security">
+  <div class="section-header">
+    <span class="icon">🛡️</span>
+    <h2>الأمان والثغرات الأمنية</h2>
+    <span class="count">37 ثغرة</span>
+  </div>
+
+  <!-- CRITICAL -->
+  <div class="issue" data-severity="critical">
+    <div class="issue-header">
+      <span class="severity severity-critical">حرج</span>
+      <span class="issue-title">1. ملف .env يحتوي على أسرار حقيقية</span>
+    </div>
+    <div class="issue-file">.env:9</div>
+    <div class="issue-desc">
+      ملف <code>.env</code> يحتوي على <code>AUTH_SECRET</code> حقيقي. إذا تم رفعه لـ Git، أي شخص يمكنه تزوير جلسات الأدمن.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="critical">
+    <div class="issue-header">
+      <span class="severity severity-critical">حرج</span>
+      <span class="issue-title">2. تصدير البيانات بدون مصادقة — backup.ts</span>
+    </div>
+    <div class="issue-file">app/actions/backup.ts:5-89</div>
+    <div class="issue-desc">
+      <code>exportProducts()</code> و <code>exportOrders()</code> و <code>exportCustomers()</code> <strong>لا تحتوي على أي فحص مصادقة</strong>. أي شخص (حتى بدون تسجيل دخول) يمكنه استدعاء هذه الأكشنز وتحميل كل قاعدة البيانات — جميع العملاء، الإيميلات، أرقام الهواتف، الطلبات، والبيانات المالية.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="critical">
+    <div class="issue-header">
+      <span class="severity severity-critical">حرج</span>
+      <span class="issue-title">3. إدارة العملاء بدون مصادقة — customers.ts</span>
+    </div>
+    <div class="issue-file">app/actions/customers.ts:6-12</div>
+    <div class="issue-desc">
+      <code>updateCustomerNotes()</code> و <code>toggleCustomerBlock()</code> <strong>ليس لها أي فحص مصادقة</strong>. أي شخص يمكنه فك حظر أي مستخدم أو تعديل ملاحظاته بإرسال الـ userId فقط.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="critical">
+    <div class="issue-header">
+      <span class="severity severity-critical">حرج</span>
+      <span class="issue-title">4. إدارة التذاكر بدون مصادقة — tickets-admin.ts</span>
+    </div>
+    <div class="issue-file">app/actions/tickets-admin.ts:11-92</div>
+    <div class="issue-desc">
+      <code>replyTicketAdminAction()</code> و <code>updateTicketStatusAction()</code> و <code>updateTicketPriorityAction()</code> <strong>ليس لها أي فحص مصادقة</strong>. أي شخص يمكنه الرد على أي تذكرة أو تغيير حالتها أو أولويتها — يتظاهر بأنه فريق الدعم الفني.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="critical">
+    <div class="issue-header">
+      <span class="severity severity-critical">حرج</span>
+      <span class="issue-title">5. العروض الفلッシュ بدون مصادقة — flash-sales.ts</span>
+    </div>
+    <div class="issue-file">app/actions/flash-sales.ts:9-67</div>
+    <div class="issue-desc">
+      <code>createFlashSaleAction()</code> و <code>deleteFlashSaleAction()</code> و <code>toggleFlashSaleAction()</code> <strong>ليس لها أي فحص مصادقة</strong>. أي زائر يمكنه إنشاء أو حذف أو تبديل العروض الفلッシュ، مما ي manipulating سعر المنتجات.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="critical">
+    <div class="issue-header">
+      <span class="severity severity-critical">حرج</span>
+      <span class="issue-title">6. API حالة الطلب بدون مصادقة</span>
+    </div>
+    <div class="issue-file">app/api/order-status/[id]/route.ts:6-22</div>
+    <div class="issue-desc">
+      نقطة النهاية تُرجع حالة أي طلب بأي معرف بدون أي مصادقة. هجوم التعداد — يمكن تكرار معرفات الطلبات لمعرفة حالة جميع الطلبات.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="critical">
+    <div class="issue-header">
+      <span class="severity severity-critical">حرج</span>
+      <span class="issue-title">7. روابط التحميل بدون مصادقة</span>
+    </div>
+    <div class="issue-file">app/api/order-file-links/route.ts:6-38</div>
+    <div class="issue-desc">
+      تُرجع رموز التحميل لأي <code>orderId</code> بدون مصادقة. المهاجم يمكنه تعداد معرفات الطلبات والحصول على رموز التحميل لجميع الملفات الرقمية المدفوعة مجانًا.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="critical">
+    <div class="issue-header">
+      <span class="severity severity-critical">حرج</span>
+      <span class="issue-title">8. تتبع الطلبات بدون مصادقة</span>
+    </div>
+    <div class="issue-file">app/api/orders/track/route.ts:4-40</div>
+    <div class="issue-desc">
+      أي شخص يمكنه البحث عن حالة الطلبات بالإيميل أو رقم الطلب بدون مصادقة. هجوم تعداد الإيميل — يمكن البحث بالإيميل لإيجاد جميع الطلبات وحالتها لأي مستخدم.
+    </div>
+  </div>
+
+  <!-- HIGH -->
+  <div class="issue" data-severity="high">
+    <div class="issue-header">
+      <span class="severity severity-high">عالي</span>
+      <span class="issue-title">9. حدود المعدل في الذاكرة — يُتجاوز بسهولة</span>
+    </div>
+    <div class="issue-file">lib/rate-limit.ts:3</div>
+    <div class="issue-desc">
+      حدود المعدل تستخدم <code>Map</code> في الذاكرة. تُعيد التعيين عند إعادة تشغيل السيرفر، ولا تعمل عبر نسخ متعددة. محدد التسجيل يستخدم مفتاح "global" مشترك بين جميع IPs — مستخدم واحد يمكنه حظر كل التسجيلات.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="high">
+    <div class="issue-header">
+      <span class="severity severity-high">عالي</span>
+      <span class="issue-title">10. JWT يستخدم HS256 (متماثل)</span>
+    </div>
+    <div class="issue-file">lib/auth.ts:36</div>
+    <div class="issue-desc">
+      إذا تسرب المفتاح (وهو موجود في <code>.env</code> على القرص)، أي شخص يمكنه تزوير رموز جلسة صالحة والحصول على وصول كامل للوحة التحكم.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="high">
+    <div class="issue-header">
+      <span class="severity severity-high">عالي</span>
+      <span class="issue-title">11. لا يوجد حماية CSRF على أكشنز السيرفر</span>
+    </div>
+    <div class="issue-file">جميع ملفات app/actions/*.ts</div>
+    <div class="issue-desc">
+      أكشنز السيرفر لا تتحقق من رمز CSRF. يمكن لصيغة عرض من موقع ضار تنفيذ أكشنز الأدمن إذا زار الأدمن الموقع الضار أثناء تسجيل الدخول.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="high">
+    <div class="issue-header">
+      <span class="severity severity-high">عالي</span>
+      <span class="issue-title">12. XSS منعكس في صفحة التحميل</span>
+    </div>
+    <div class="issue-file">app/api/download/route.ts:59-64</div>
+    <div class="issue-desc">
+      أسماء المنتجات تُدخل مباشرة في سلسلة HTML بدون ترميز. إذا كان اسم المنتج يحتوي على <code>&lt;script&gt;</code>، سيُنفذ في متصفح المستخدمين.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="high">
+    <div class="issue-header">
+      <span class="severity severity-high">عالي</span>
+      <span class="issue-title">13. نقطة النهاية cron بدون مصادقة عند غياب المتغيرات</span>
+    </div>
+    <div class="issue-file">app/api/cron/route.ts:8-15</div>
+    <div class="issue-desc">
+      إذا كان <code>CRON_API_KEY</code> و <code>ADMIN_API_KEY</code> غير معرّفين، نقطة النهاية <code>/api/cron</code> ليس لها أي مصادقة. أي شخص يمكنه استدعاؤها لإجبار تأكيد وتوصيل جميع الطلبات المعلقة.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="high">
+    <div class="issue-header">
+      <span class="severity severity-high">عالي</span>
+      <span class="issue-title">14. كلمة السر الأدنى 6 أحرف فقط</span>
+    </div>
+    <div class="issue-file">app/actions/auth.ts:38-39</div>
+    <div class="issue-desc">
+      الحد الأدنى لطول كلمة السر 6 أحرف فقط. لا يوجد متطلبات تعقيد (أحرف كبيرة، أرقام، رموز). كلمات مثل "123456" مقبولة.
+    </div>
+  </div>
+
+  <!-- MEDIUM -->
+  <div class="issue" data-severity="medium">
+    <div class="issue-header">
+      <span class="severity severity-medium">متوسط</span>
+      <span class="issue-title">15. حالة الطلب نص عادي — بدون تحقق من Enum</span>
+    </div>
+    <div class="issue-file">prisma/schema.prisma:89</div>
+    <div class="issue-desc">
+      <code>Order.status</code> مُعرّف كـ <code>String</code> وليس Enum. الحالات الصحيحة مُ enforced في الكود فقط. قاعدة البيانات تسمح بأي نص.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="medium">
+    <div class="issue-header">
+      <span class="severity severity-medium">متوسط</span>
+      <span class="issue-title">16. JSON مخزن كنصوص في SQLite</span>
+    </div>
+    <div class="issue-file">prisma/schema.prisma:26-37</div>
+    <div class="issue-desc">
+      حقول مثل <code>tags</code> و <code>images</code> و <code>files</code> و <code>permissions</code> تخزن JSON كنصوص خام. لا يوجد تحقق على مستوى قاعدة البيانات للهيكل.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="medium">
+    <div class="issue-header">
+      <span class="severity severity-medium">متوسط</span>
+      <span class="issue-title">17. رفع الملفات — لا يوجد تحقق من الامتداد</span>
+    </div>
+    <div class="issue-file">app/actions/admin.ts:107-111</div>
+    <div class="issue-desc">
+      أسماء الملفات تُنظف لكن الامتداد يُاخذ من الاسم الأصلي بدون تحقق من الأنواع المسموح بها. ملف <code>shell.php.jpg</code> يمكن رفعه وتقديمه كملف ثابت.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="medium">
+    <div class="issue-header">
+      <span class="severity severity-medium">متوسط</span>
+      <span class="issue-title">18. مدة الجلسة 30 يوم بدون تجديد</span>
+    </div>
+    <div class="issue-file">lib/auth.ts:12</div>
+    <div class="issue-desc">
+      JWTs حالتها ثابتة — رمز مسروق صالح لمدة 30 يومًا بدون آلية إلغاء. لا يمكن إبطالها من جانب السيرفر بدون تغيير <code>AUTH_SECRET</code>.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="medium">
+    <div class="issue-header">
+      <span class="severity severity-medium">متوسط</span>
+      <span class="issue-title">19. حذف الحساب لا يحذف الطلبات</span>
+    </div>
+    <div class="issue-file">app/actions/account.ts:69-91</div>
+    <div class="issue-desc">
+      عند حذف حساب المستخدم، يتم حذف سجل <code>User</code> فقط. طلباته تبقى مع مراجع <code>userId</code> يتيمة. لا يوجد <code>onDelete: Cascade</code> على Order→User.
+    </div>
+  </div>
+
+  <!-- LOW -->
+  <div class="issue" data-severity="low">
+    <div class="issue-header">
+      <span class="severity severity-low">منخفض</span>
+      <span class="issue-title">20. لا يوجد تحقق من كلمة السر عند تغييرها</span>
+    </div>
+    <div class="issue-file">app/actions/account.ts:34-67</div>
+    <div class="issue-desc">
+      <code>changePasswordAction</code> لا يحتوي على حدود معدل. المهاجم بصلاحيات جلسة صالحة يمكنه تجربة تغيير كلمة السر بشكل متكرر.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="low">
+    <div class="issue-header">
+      <span class="severity severity-low">منخفض</span>
+      <span class="issue-title">21. رسائل الخطأ تكشف وجود المستخدم</span>
+    </div>
+    <div class="issue-file">app/actions/auth.ts:42</div>
+    <div class="issue-desc">
+      التسجيل يقول "فيه حساب بالإيميل ده بالفعل" — يكشف صحة الإيميل. يمكن للمهاجم تعداد عناوين الإيميل الصالحة عبر نموذج التسجيل.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="low">
+    <div class="issue-header">
+      <span class="severity severity-low">منخفض</span>
+      <span class="issue-title">22. لا يوجد CSP أو CORS</span>
+    </div>
+    <div class="issue-file">middleware.ts</div>
+    <div class="issue-desc">
+      الـ middleware لا يضيف أي رؤوس أمان — لا CSP، لا X-Frame-Options، لا HSTS. يمكن للموقع انتحال الهوية عبر iframe.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- BUGS SECTION -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="section" data-category="bugs">
+  <div class="section-header">
+    <span class="icon">🐛</span>
+    <h2>الأخطاء والمنطق غير المنطقي</h2>
+    <span class="count">35 خطأ</span>
+  </div>
+
+  <div class="issue" data-severity="critical">
+    <div class="issue-header">
+      <span class="severity severity-critical">حرج</span>
+      <span class="issue-title">1. السلة تتجاهل كمية الإضافة — cart.tsx</span>
+    </div>
+    <div class="issue-file">lib/cart.tsx:82-88</div>
+    <div class="issue-desc">
+      دالة <code>add()</code> تقبل بارامتر <code>qty</code> لكنها تُجاهله تمامًا — تُضيف دائمًا <code>qty: 1</code> بغض النظر عن القيمة الممررة. عند استدعاء <code>add(item, 3)</code>، العنصر يُضاف بكمية 1 فقط.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="critical">
+    <div class="issue-header">
+      <span class="severity severity-critical">حرج</span>
+      <span class="issue-title">2. طريقة الدفع مثبتة على "transfer" — CheckoutMultiStep.tsx</span>
+    </div>
+    <div class="issue-file">components/CheckoutMultiStep.tsx:212</div>
+    <div class="issue-desc">
+      الحقل المخفي <code>paymentMethod</code> مثبت على <code>"transfer"</code> دائماً. التحقق في الـ action يفحص <code>paymentMethod !== "transfer"</code> لكن القيمة دائماً "transfer" فيتجاوز التحقق. أي معرّف طريقة دفع (حتى عشوائي) يُقبل.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="critical">
+    <div class="issue-header">
+      <span class="severity severity-critical">حرج</span>
+      <span class="issue-title">3. لا تحقق من صلاحية طريقة الدفع — checkout.ts</span>
+    </div>
+    <div class="issue-file">app/actions/checkout.ts:91-92</div>
+    <div class="issue-desc">
+      الكود لا يستدعي <code>getPaymentMethodById(paymentMethodId)</code> للتحقق من أن طريقة الدفع المختارة موجودة ومفعلة. المستخدم الخبيث يمكنه إرسال أي نص كطريقة دفع.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="critical">
+    <div class="issue-header">
+      <span class="severity severity-critical">حرج</span>
+      <span class="issue-title">4. واجهة التحميل بدون تحقق من المستخدم</span>
+    </div>
+    <div class="issue-file">app/api/download/route.ts:6-75</div>
+    <div class="issue-desc">
+      أي شخص برمز تحميل صالح يمكنه تحميل الملفات. الرمز غير مرتبط بمستخدم محدد — فقط بالطلب. إذا تسرب الرمز، أي شخص يمكنه استخدامه. لا يوجد تقييد على محاولات التحميل.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="high">
+    <div class="issue-header">
+      <span class="severity severity-high">عالي</span>
+      <span class="issue-title">5. إعجاب/الإبلاغ عن المراجعات — لا يفعل شيئًا</span>
+    </div>
+    <div class="issue-file">app/actions/reviews.ts:61-99</div>
+    <div class="issue-desc">
+      <code>likeReviewAction</code> و <code>reportReviewAction</code> مُعلّقتان داخليًا — تستخرج المراجعة لكنها لا تُحدّث شيئًا. تُرجع <code>{ ok: true }</code> رغم عدم تنفيذ أي إجراء. الأزرار تظهر لكن لا تفعل شيئًا.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="high">
+    <div class="issue-header">
+      <span class="severity severity-high">عالي</span>
+      <span class="issue-title">6. التحقق من الكوبون لا يُمرر سياق المستخدم</span>
+    </div>
+    <div class="issue-file">app/api/coupon/validate/route.ts:16</div>
+    <div class="issue-desc">
+      نقطة النهاية تستدعي <code>validateCoupon(code, subtotal)</code> بدون <code>userId</code> أو <code>cartProductIds</code>. الكوبونات المقيّدة بمستخدمين أو منتجات سيفشل تحققها عبر API حتى لو كانت صالحة.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="high">
+    <div class="issue-header">
+      <span class="severity severity-high">عالي</span>
+      <span class="issue-title">7. إعادة استلام الطلب لا تفعل شيئًا</span>
+    </div>
+    <div class="issue-file">app/actions/order-actions.ts:17-42</div>
+    <div class="issue-desc">
+      <code>reReceiveOrder</code> تتحقق من الملكية والحالة لكنها <strong>لا تُحدّث الطلب فعلًا</strong>. تُرجع <code>{ ok: true }</code> بدون أي تغيير. حالة الطلب تبقى "delivered".
+    </div>
+  </div>
+
+  <div class="issue" data-severity="high">
+    <div class="issue-header">
+      <span class="severity severity-high">عالي</span>
+      <span class="issue-title">8. وضع الصيانة يُتجاوز تمامًا</span>
+    </div>
+    <div class="issue-file">middleware.ts:11-16</div>
+    <div class="issue-desc">
+      الـ middleware يُرجع دائمًا <code>NextResponse.next()</code> بغض النظر عن وضع الصيانة. الصيانة تُفرض فقط من جانب العميل عبر <code>MaintenanceGuard</code>. يمكن تجاوزها بإلغاء تفعيل JavaScript. API routes لا تُحظر أبدًا أثناء الصيانة.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="high">
+    <div class="issue-header">
+      <span class="severity severity-high">عالي</span>
+      <span class="issue-title">9. حقل البحث يُفقد فلاتر URL</span>
+    </div>
+    <div class="issue-file">components/SearchBar.tsx:11-21</div>
+    <div class="issue-desc">
+      البحث يدفع إلى <code>/?q=...#products</code> ويلغي أي فلاتر موجودة (فئة، ترتيب). المستخدمون يفقدون فلاترهم النشطة عند البحث.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="medium">
+    <div class="issue-header">
+      <span class="severity severity-medium">متوسط</span>
+      <span class="issue-title">10. حدود التسجيل العامة — حساب واحد يحظر الجميع</span>
+    </div>
+    <div class="issue-file">app/actions/auth.ts:32-33</div>
+    <div class="issue-desc">
+      <code>checkRegisterRate("global")</code> يُطبّق حدود المعدل عالميًا — جميع المستخدمين يشاركون نفس الحد (3 حسابات/ساعة). إذا سجل شخص واحد، الجميع يُحظرون.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="medium">
+    <div class="issue-header">
+      <span class="severity severity-medium">متوسط</span>
+      <span class="issue-title">11. حذف الحساب لا ينظف بيانات المستخدم</span>
+    </div>
+    <div class="issue-file">app/actions/account.ts:69-91</div>
+    <div class="issue-desc">
+      حذف الحساب يحذف سجل <code>User</code> فقط. الطلبات، المراجعات، تذاكر الدعم، قائمة الأمنيات — كلها تبقى مع مراجع يتيمة.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="medium">
+    <div class="issue-header">
+      <span class="severity severity-medium">متوسط</span>
+      <span class="issue-title">12. إعدادات المتجر تُحفظ في كاش على مستوى الموديول</span>
+    </div>
+    <div class="issue-file">lib/settings.ts:73-108</div>
+    <div class="issue-desc">
+      الكاش متغير على مستوى الموديول. في نشرات متعددة النسخ، كل نسخة قد تخدم إعدادات مختلفة. <code>saveSettings</code> تُلغي كاش النسخة المحلية فقط.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="medium">
+    <div class="issue-header">
+      <span class="severity severity-medium">متوسط</span>
+      <span class="issue-title">13. صفحة الإعدادات ناقصة — علامات تبويب مفقودة</span>
+    </div>
+    <div class="issue-file">components/admin/AdminSettingsPage.tsx:14-20</div>
+    <div class="issue-desc">
+      صفحة الإعدادات فيها 5 علامات تبويب فقط (عام، دفع، صيانة، bump، مصادقة). ناقصة: وسائل التواصل الاجتماعي، الفوتر، الضرائب، الولاء، الدعم، البحث، بكسلات التتبّع.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- DESIGN SECTION -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="section" data-category="design">
+  <div class="section-header">
+    <span class="icon">🎨</span>
+    <h2>التصميم والتجربة</h2>
+    <span class="count">47 مشكلة</span>
+  </div>
+
+  <div class="issue" data-severity="critical">
+    <div class="issue-header">
+      <span class="severity severity-critical">حرج</span>
+      <span class="issue-title">1. السلة تنزلق من الجانب الخطأ في RTL</span>
+    </div>
+    <div class="issue-file">components/CartDrawer.tsx:50-52</div>
+    <div class="issue-desc">
+      السلة تستخدم <code>left-0</code> و <code>-translate-x-full</code>. في RTL، السلة يجب أن تنزلق من <strong>الجانب الأيمن</strong> (لأن اليمين هو البداية). حالياً تنزلق من الجانب الأيسر وهو النهاية في RTL.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="critical">
+    <div class="issue-header">
+      <span class="severity severity-critical">حرج</span>
+      <span class="issue-title">2. لا يوجد Error Boundary عالمي</span>
+    </div>
+    <div class="issue-file">app/layout.tsx</div>
+    <div class="issue-desc">
+      لا يوجد <code>error.tsx</code> في الجذر أو أي مسار. إذا ألقى أي مكون سيرفر خطأ، المستخدمون يرون صفحة خطأ Next.js الافتراضية بدون أي هوية للمتجر أو خيارات استرداد.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="critical">
+    <div class="issue-header">
+      <span class="severity severity-critical">حرج</span>
+      <span class="issue-title">3. هوية الألوان تتغير بين الثيمات</span>
+    </div>
+    <div class="issue-file">app/globals.css:60-96</div>
+    <div class="issue-desc">
+      الثيم الداكن <code>bg-brand-gradient</code> بنفسجي، لكن الثيم الفاتح يُغيّره لبرتقالي. التبديل بين الثيمات يُحدث تغيّر جذري في هوية الألوان — الأزرار والتقنيات والتك씨ات تتغير بالكامل.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="critical">
+    <div class="issue-header">
+      <span class="severity severity-critical">حرج</span>
+      <span class="issue-title">4. شريط المقارنة يُخفي المحتوى السفلي</span>
+    </div>
+    <div class="issue-file">components/CompareBar.tsx:26</div>
+    <div class="issue-desc">
+      الشريط الثابت <code>fixed bottom-0</code> يُخفي محتوى الصفحة السفلي. لا توجد مسافة <code>padding-bottom</code> تعويضية. المستخدمون لا يرون المحتوى خلف الشريط.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="critical">
+    <div class="issue-header">
+      <span class="severity severity-critical">حرج</span>
+      <span class="issue-title">5. مودال الصور بدون focus trap</span>
+    </div>
+    <div class="issue-file">components/ReviewList.tsx:85-106</div>
+    <div class="issue-desc">
+      مودال الصور المكبّر ليس له <code>role="dialog"</code> أو <code>aria-modal="true"</code> أو focus trap. الضغط على Escape لا يُغلقه. المستخدمون بلوحة المفاتيح لا يتفاعلون معه بشكل صحيح.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="high">
+    <div class="issue-header">
+      <span class="severity severity-high">عالي</span>
+      <span class="issue-title">6. حقل البحث بدون label</span>
+    </div>
+    <div class="issue-file">components/SearchBar.tsx:25-30</div>
+    <div class="issue-desc">
+      حقل <code>&lt;input&gt;</code> ليس له <code>id</code> أو <code>&lt;label&gt;</code> أو <code>aria-label</code>. قارئات الشاشة لا تعلن عن غرض الحقل. يوجد placeholder فقط.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="high">
+    <div class="issue-header">
+      <span class="severity severity-high">عالي</span>
+      <span class="issue-title">7. روابط المنتجات بدون أسماء مُ الوصول</span>
+    </div>
+    <div class="issue-file">components/ProductCard.tsx:15-17</div>
+    <div class="issue-desc">
+      <code>&lt;Link&gt</code> الذي يُغلّف صورة المنتج ليس له نص محتوى أو <code>aria-label</code>. قارئات الشاشة تُعلن عن وجهة الرابط فقط بدون معرفة ما هو.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="high">
+    <div class="issue-header">
+      <span class="severity severity-high">عالي</span>
+      <span class="issue-title">8. تقييم النجوم غير متاح</span>
+    </div>
+    <div class="issue-file">app/products/[slug]/page.tsx:116-125</div>
+    <div class="issue-desc">
+      تقييم النجوم يستخدم عناصر <code>&lt;svg&gt;</code> فردية بدون <code>aria-label</code> أو <code>role="img"</code>. قارئ الشاشة يحاول التنقل داخل كل SVG. يجب أن يكون عنصر واحد مع <code>aria-label="تقييم 4 من 5"</code>.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="high">
+    <div class="issue-header">
+      <span class="severity severity-high">عالي</span>
+      <span class="issue-title">9. ShareButtons — عدم تطابق hydration</span>
+    </div>
+    <div class="issue-file">components/ShareButtons.tsx:13</div>
+    <div class="issue-desc">
+      <code>window.location.origin</code> يُرجع فارغًا أثناء SSR والقيمة الكاملة عند Client. يحدث وميض وعدم تطابق بين العميل والخادم.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="high">
+    <div class="issue-header">
+      <span class="severity severity-high">عالي</span>
+      <span class="issue-title">10. أخطاء Wishlist و LiveSearch تُبتلع بصمت</span>
+    </div>
+    <div class="issue-file">app/wishlist/page.tsx:76, components/LiveSearch.tsx:53</div>
+    <div class="issue-desc">
+      كلاهما يستخدم <code>.catch(() => ...)</code> لامتصاص الأخطاء بصمت. المستخدم لا يعرف إذا كانت القائمة فاضية أو حدث خطأ في الشبكة.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="high">
+    <div class="issue-header">
+      <span class="severity severity-high">عالي</span>
+      <span class="issue-title">11. Logo و Footer يستدعيان getSettings بشكل منفصل</span>
+    </div>
+    <div class="issue-file">components/Logo.tsx:6, components/SiteFooter.tsx:7</div>
+    <div class="issue-desc">
+      كلاهما يستدعي <code>getSettings()</code> بشكل مستقل. مع الصفحة الرئيسية والهيدر، هناك 3+ استدعاءات مستقلة لـ <code>getSettings()</code> لكل تحميل صفحة.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="medium">
+    <div class="issue-header">
+      <span class="severity severity-medium">متوسط</span>
+      <span class="issue-title">12. لا يوجد انتقالات صفحة</span>
+    </div>
+    <div class="issue-file">app/layout.tsx</div>
+    <div class="issue-desc">
+      التخطيط الجذرى ليس له <code>&lt;AnimatePresence&gt;</code> أو غلاف انتقال. التنقل بين الصفحات فوري بدون أي تأثيرات حركة — يجعل التطبيق يبدو أقل احترافية.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="medium">
+    <div class="issue-header">
+      <span class="severity severity-medium">متوسط</span>
+      <span class="issue-title">13. حالات التحميل نص عادي بدون spinner</span>
+    </div>
+    <div class="issue-file">app/cart/page.tsx:34-38, app/wishlist/page.tsx:16-19</div>
+    <div class="issue-desc">
+      حالات التحميل تُظهر نص "جاري التحميل..." فقط بدون أي مؤشر تحميل مرئي (spinner أو skeleton). هذه الحالة الوحيدة لكل صفحة.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="medium">
+    <div class="issue-header">
+      <span class="severity severity-medium">متوسط</span>
+      <span class="issue-title">14. صورة المنتج عند الخطأ تُظهر حرفًا واحدًا</span>
+    </div>
+    <div class="issue-file">components/OptimizedImage.tsx:43-46</div>
+    <div class="issue-desc">
+      عند فشل تحميل الصورة، يُظهر <code>alt.charAt(0)</code> — الحرف الأول من نص البديل. للاسم العربي، يظهر حرف عربي واحد في صندوق متدرج يبدو مكسورًا ومحيرًا بدل placeholder مناسب.
+    </div>
+  </div>
+
+  <div class="issue" data-severity="medium">
+    <div class="issue-header">
+      <span class="severity severity-medium">متوسط</span>
+      <span class="issue-title">15. CheckoutMultiStep — خطوات مخفية تُزيل من DOM</span>
+    </div>
+    <div class="issue-file">components/CheckoutMultiStep.tsx:220,295,463</div>
+    <div class="issue-desc">
+      يستخدم <code>hidden</code> لإخفاء الخطوات غير النشطة. هذا يُزيل العناصر من إمكانية الوصول — قارئات الشاشة لا تصل إليها، ولا توجد انتقالات متحركة بين الخطوات.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- PRIORITY TABLE -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <span class="icon">⚡</span>
+    <h2>خطة الإصلاح حسب الأولوية</h2>
+  </div>
+
+  <table class="summary-table">
+    <thead>
+      <tr>
+        <th>الأولوية</th>
+        <th>المشكلات</th>
+        <th>الإجراء المطلوب</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="color:var(--red);font-weight:700">P0 — فوري</td>
+        <td>ثغرات الأمان الحرج: backup.ts, customers.ts, tickets-admin.ts, flash-sales.ts, API routes</td>
+        <td>إضافة <code>requireAdmin()</code> أو <code>getCurrentUser()</code> لكل أكشن وAPI</td>
+      </tr>
+      <tr>
+        <td style="color:var(--red);font-weight:700">P0 — فوري</td>
+        <td>سلة RTL، مودال الصور، Error Boundary، هوية الألوان</td>
+        <td>إصلاح مشاكل UX الكارثية</td>
+      </tr>
+      <tr>
+        <td style="color:var(--orange);font-weight:700">P1 — قريباً</td>
+        <td>Cart qty، طريقة الدفع، وضع الصيانة، إعجاب المراجعات</td>
+        <td>إصلاح الأخطاء الوظيفية الحرجة</td>
+      </tr>
+      <tr>
+        <td style="color:var(--orange);font-weight:700">P1 — قريباً</td>
+        <td>Accessibility: حقل البحث، روابط المنتجات، تقييم النجوم</td>
+        <td>تحسين إمكانية الوصول</td>
+      </tr>
+      <tr>
+        <td style="color:var(--yellow);font-weight:700">P2 — 다음 스프린트</td>
+        <td>RTL polish، حالة التحميل، انتقالات الصفحة، الهجرة</td>
+        <td>تحسين التصميم والتجربة</td>
+      </tr>
+      <tr>
+        <td style="color:var(--blue);font-weight:700">P3 — تحسينات</td>
+        <td>contrasts، typography، animations، loading states</td>
+        <td>تحسينات بسيطة</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+</div><!-- end container -->
+
+<script>
+function showSection(category) {
+  document.querySelectorAll('.section').forEach(s => {
+    s.style.display = (category === 'all' || s.dataset.category === category) ? '' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+function filterSeverity(severity, btn) {
+  document.querySelectorAll('.issue').forEach(i => {
+    i.style.display = (severity === 'all' || i.dataset.severity === severity) ? '' : 'none';
+  });
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>
