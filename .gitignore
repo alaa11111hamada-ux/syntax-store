@@ -44,3 +44,14 @@ next-env.d.ts
 
 # رفع الملفات (إثبات الدفع)
 /public/uploads
+
+# SQLite database
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# temp files
+check*.js
+check*.cjs
+check*.mjs
