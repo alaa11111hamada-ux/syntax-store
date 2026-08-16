@@ -4,11 +4,16 @@ import { prisma } from "@/lib/prisma";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
-  const products = await prisma.product.findMany({
-    where: { active: true },
-    select: { slug: true, updatedAt: true },
-    orderBy: { createdAt: "desc" },
-  });
+  let products: { slug: string; updatedAt: Date }[] = [];
+  try {
+    products = await prisma.product.findMany({
+      where: { active: true },
+      select: { slug: true, updatedAt: true },
+      orderBy: { createdAt: "desc" },
+    });
+  } catch {
+    // DB unavailable at build time
+  }
 
   const productUrls = products.map((p) => ({
     url: `${base}/products/${p.slug}`,
