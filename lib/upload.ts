@@ -1,15 +1,13 @@
 import "server-only";
-import { writeFile, mkdir } from "node:fs/promises";
-import path from "node:path";
+import { supabaseStorage } from "@/lib/supabase-storage";
 
 const ALLOWED_IMAGE = ["image/jpeg", "image/png", "image/webp"];
 const DEFAULT_MAX = 5 * 1024 * 1024; // 5MB
 
-// Magic bytes للتحقق من محتوى الصورة فعلياً
 const SIGNATURES: Record<string, number[]> = {
   "image/jpeg": [0xff, 0xd8, 0xff],
   "image/png": [0x89, 0x50, 0x4e, 0x47],
-  "image/webp": [0x52, 0x49, 0x46, 0x46], // RIFF header
+  "image/webp": [0x52, 0x49, 0x46, 0x46],
 };
 
 async function verifyImageContent(file: File): Promise<boolean> {
@@ -21,7 +19,12 @@ async function verifyImageContent(file: File): Promise<boolean> {
   return false;
 }
 
-/** يحفظ صورة مرفوعة في public/uploads/<subdir> ويرجّع المسار العام */
+function randomId(len = 20): string {
+  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+  return Array.from({ length: len }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+}
+
+/** يحفظ صورة على Supabase Storage ويرجّع الرابط العام */
 export async function saveImage(
   file: File,
   subdir: string,
@@ -36,15 +39,37 @@ export async function saveImage(
   if (!(await verifyImageContent(file))) {
     throw new Error("الملف مش صورة حقيقية — تحقق من المحتوى.");
   }
-  const ext =
-    file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
-  const rand = Array.from({ length: 20 }, () =>
-    "abcdefghijklmnopqrstuvwxyz0123456789"[Math.floor(Math.random() * 36)]
-  ).join("");
-  const filename = `${Date.now()}-${rand}.${ext}`;
-  const dir = path.join(process.cwd(), "public", "uploads", subdir);
-  await mkdir(dir, { recursive: true });
-  const bytes = Buffer.from(await file.arrayBuffer());
-  await writeFile(path.join(dir, filename), bytes);
-  return `/uploads/${subdir}/${filename}`;
+
+  const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+  const filename = `${subdir}/${Date.now()}-${randomId()}.${ext}`;
+  const bytes = new Uint8Array(await file.arrayBuffer());
+
+  const { error } = await supabaseStorage.storage
+    .from("uploads")
+    .upload(filename, bytes, { contentType: file.type, upsert: false });
+
+  if (error) throw new Error(`فشل رفع الصورة: ${error.message}`);
+
+  const { data: urlData } = supabaseStorage.storage.from("uploads").getPublicUrl(filename);
+  return urlData.publicUrl;
+}
+
+/** يحفظ ملف رقمي على Supabase Storage ويرجّع الرابط العام */
+export async function saveDigitalFile(file: File): Promise<string> {
+  if (file.size > 100 * 1024 * 1024) {
+    throw new Error("حجم الملف كبير (الحد الأقصى 100 ميجا).");
+  }
+  const ext = file.name.split(".").pop() || "bin";
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 60);
+  const filename = `files/${Date.now()}-${randomId()}-${safeName}`;
+  const bytes = new Uint8Array(await file.arrayBuffer());
+
+  const { error } = await supabaseStorage.storage
+    .from("uploads")
+    .upload(filename, bytes, { contentType: file.type || "application/octet-stream", upsert: false });
+
+  if (error) throw new Error(`فشل رفع الملف: ${error.message}`);
+
+  const { data: urlData } = supabaseStorage.storage.from("uploads").getPublicUrl(filename);
+  return urlData.publicUrl;
 }

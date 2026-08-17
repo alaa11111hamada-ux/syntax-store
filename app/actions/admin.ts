@@ -1,11 +1,9 @@
 "use server";
 
-import { writeFile, mkdir } from "node:fs/promises";
-import path from "node:path";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
-import { saveImage } from "@/lib/upload";
+import { saveImage, saveDigitalFile } from "@/lib/upload";
 import { updateOrderStatus } from "@/lib/orders";
 import { ORDER_STATUSES, type OrderStatus } from "@/lib/orders";
 import {
@@ -98,23 +96,6 @@ function egpToCents(v: string): number | null {
   const n = Number(v.replace(/,/g, ""));
   if (!Number.isFinite(n) || n < 0) return null;
   return Math.round(n * 100);
-}
-
-async function saveDigitalFile(file: File): Promise<string> {
-  if (file.size > 100 * 1024 * 1024) {
-    throw new Error("حجم الملف كبير (الحد الأقصى 100 ميجا).");
-  }
-  const ext = file.name.split(".").pop() || "bin";
-  const rand = Array.from({ length: 16 }, () =>
-    "abcdefghijklmnopqrstuvwxyz0123456789"[Math.floor(Math.random() * 36)]
-  ).join("");
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 60);
-  const filename = `${Date.now()}-${rand}-${safeName}`;
-  const dir = path.join(process.cwd(), "public", "uploads", "files");
-  await mkdir(dir, { recursive: true });
-  const bytes = Buffer.from(await file.arrayBuffer());
-  await writeFile(path.join(dir, filename), bytes);
-  return `/uploads/files/${filename}`;
 }
 
 function parseJsonArray(v: FormDataEntryValue | null): string[] {
