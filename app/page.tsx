@@ -5,6 +5,7 @@ import SearchBar from "@/components/SearchBar";
 import CategoriesFilter from "@/components/CategoriesFilter";
 import Pagination from "@/components/Pagination";
 import { getActiveProducts, getCategories } from "@/lib/products";
+import type { PaginatedProducts } from "@/lib/products";
 
 export const dynamic = "force-dynamic";
 
@@ -12,19 +13,34 @@ type Props = {
   searchParams: Promise<{ q?: string; cat?: string; page?: string }>;
 };
 
+const emptyResult: PaginatedProducts = {
+  items: [],
+  total: 0,
+  page: 1,
+  perPage: 12,
+  totalPages: 0,
+};
+
 export default async function HomePage({ searchParams }: Props) {
   const { q, cat, page } = await searchParams;
   const pageNum = Math.max(1, parseInt(page ?? "1", 10) || 1);
 
-  const [result, categories] = await Promise.all([
-    getActiveProducts({
-      search: q || undefined,
-      category: cat || undefined,
-      page: pageNum,
-      perPage: 12,
-    }),
-    getCategories(),
-  ]);
+  let result = emptyResult;
+  let categories: string[] = [];
+
+  try {
+    [result, categories] = await Promise.all([
+      getActiveProducts({
+        search: q || undefined,
+        category: cat || undefined,
+        page: pageNum,
+        perPage: 12,
+      }),
+      getCategories(),
+    ]);
+  } catch {
+    // DB unavailable — show empty state
+  }
 
   return (
     <>
@@ -89,13 +105,15 @@ export default async function HomePage({ searchParams }: Props) {
 
           <ProductGrid products={result.items} />
 
-          <div className="mt-8">
-            <Pagination
-              page={result.page}
-              totalPages={result.totalPages}
-              baseUrl="/"
-            />
-          </div>
+          {result.totalPages > 1 && (
+            <div className="mt-8">
+              <Pagination
+                page={result.page}
+                totalPages={result.totalPages}
+                baseUrl="/"
+              />
+            </div>
+          )}
         </div>
       </section>
     </>
