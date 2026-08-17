@@ -6,6 +6,7 @@ import Image from "next/image";
 import type { ProductView } from "@/lib/products";
 import type { ProductFormState } from "@/app/actions/admin";
 import BundleEditor from "./BundleEditor";
+import { supabaseBrowser } from "@/lib/supabase-browser";
 
 type Action = (
   prev: ProductFormState,
@@ -105,20 +106,18 @@ export default function ProductForm({
           placeholder="مثال: ملف الدورة التعليمية كاملة"
         />
         <Field
-          label="رابط الملف (اختياري — للتحديث لاحقاً)"
+          label="رابط الملف (يتم ملؤه تلقائيًّا بعد الرفع)"
           name="fileUrl"
           defaultValue={product?.fileUrl ?? ""}
-          placeholder="https://example.com/file.pdf أو /uploads/files/file.zip"
+          placeholder="https://example.com/file.pdf"
         />
-        <label className="mt-3 block text-sm text-muted" htmlFor="file">
-          أو ارفع ملف (PDF, ZIP, MP4...)
+        <label className="mt-3 block text-sm text-muted">
+          أو ارفع ملف (PDF, ZIP, MP4... — أي حجم)
         </label>
-        <input
-          id="file"
+        <DirectFileUpload
           name="file"
-          type="file"
           accept=".pdf,.zip,.rar,.mp4,.mp3,.doc,.docx,.pptx,.xlsx"
-          className="mt-1 block w-full text-sm text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-brand-600 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:bg-brand-700"
+          label="اختر ملف"
         />
         {product?.fileUrl && (
           <p className="mt-2 text-xs text-green-400">
@@ -171,16 +170,14 @@ export default function ProductForm({
           placeholder="/products/example.svg"
           className="mt-1 w-full rounded-xl border border-line bg-bg px-3 py-2 text-fg outline-none focus:border-brand-500"
         />
-        <label className="mt-3 block text-sm text-muted" htmlFor="images">
+        <label className="mt-3 block text-sm text-muted">
           أو ارفع صور (تتضاف للروابط — يمكن اختيار أكثر من صورة)
         </label>
-        <input
-          id="images"
+        <DirectFileUpload
           name="images"
-          type="file"
-          multiple
           accept="image/png,image/jpeg,image/webp"
-          className="mt-1 block w-full text-sm text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-brand-600 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:bg-brand-700"
+          label="اختر صور"
+          multiple
         />
         {product?.images && product.images.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-2">
@@ -383,12 +380,18 @@ function FilesSection({
     try {
       const uploaded: { name: string; url: string }[] = [];
       for (const file of Array.from(selected)) {
-        const fd = new FormData();
-        fd.append("file", file);
-        const res = await fetch("/api/upload/file", { method: "POST", body: fd });
-        if (res.ok) {
-          const data = await res.json();
-          uploaded.push({ name: file.name, url: data.url });
+        const ext = file.name.split(".").pop() || "bin";
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 60);
+        const filename = `files/${Date.now()}-${randomId()}-${safeName}`;
+        const bytes = new Uint8Array(await file.arrayBuffer());
+
+        const { error } = await supabaseBrowser.storage
+          .from("uploads")
+          .upload(filename, bytes, { contentType: file.type || "application/octet-stream" });
+
+        if (!error) {
+          const { data } = supabaseBrowser.storage.from("uploads").getPublicUrl(filename);
+          uploaded.push({ name: file.name, url: data.publicUrl });
         }
       }
       setFiles((prev) => [...prev, ...uploaded]);
@@ -613,6 +616,111 @@ function CustomFieldsSection({
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+function randomId(len = 16): string {
+  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+  return Array.from({ length: len }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+}
+
+function DirectFileUpload({
+  name,
+  accept,
+  label,
+  multiple,
+}: {
+  name: string;
+  accept: string;
+  label: string;
+  multiple?: boolean;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState("");
+  const [uploaded, setUploaded] = useState<string[]>([]);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = e.target.files;
+    if (!selected || selected.length === 0) return;
+    setUploading(true);
+
+    try {
+      const results: string[] = [];
+      for (let i = 0; i < selected.length; i++) {
+        const file = selected[i];
+        setProgress(`جاري رفع ${i + 1}/${selected.length}...`);
+        const ext = file.name.split(".").pop() || "bin";
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 60);
+        const filename = `${name}/${Date.now()}-${randomId()}-${safeName}`;
+        const bytes = new Uint8Array(await file.arrayBuffer());
+
+        const { error } = await supabaseBrowser.storage
+          .from("uploads")
+          .upload(filename, bytes, { contentType: file.type || "application/octet-stream" });
+
+        if (error) {
+          setProgress(`خطأ: ${error.message}`);
+          continue;
+        }
+
+        const { data } = supabaseBrowser.storage.from("uploads").getPublicUrl(filename);
+        results.push(data.publicUrl);
+      }
+      setUploaded((prev) => [...prev, ...results]);
+      setProgress(results.length > 0 ? `تم رفع ${results.length} ملف(ات)` : "");
+    } catch (err: unknown) {
+      setProgress(`خطأ: ${err instanceof Error ? err.message : "فشل الرفع"}`);
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
+  if (multiple) {
+    return (
+      <div>
+        <input type="hidden" name={name} value={uploaded.join("\n")} />
+        <label className="cursor-pointer mt-1 block w-full text-sm text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-brand-600 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:bg-brand-700">
+          {uploading ? progress : label}
+          <input
+            ref={fileRef}
+            type="file"
+            accept={accept}
+            multiple
+            className="hidden"
+            onChange={handleUpload}
+            disabled={uploading}
+          />
+        </label>
+        {uploaded.length > 0 && (
+          <p className="mt-1 text-xs text-green-400">تم رفع {uploaded.length} ملف</p>
+        )}
+        {progress && uploading && (
+          <p className="mt-1 text-xs text-muted">{progress}</p>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <input type="hidden" name={name} value={uploaded[0] || ""} />
+      <label className="cursor-pointer mt-1 block w-full text-sm text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-brand-600 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:bg-brand-700">
+        {uploading ? progress : uploaded.length > 0 ? `تم الرفع ✓ — ${label} تاني` : label}
+        <input
+          ref={fileRef}
+          type="file"
+          accept={accept}
+          className="hidden"
+          onChange={handleUpload}
+          disabled={uploading}
+        />
+      </label>
+      {progress && !uploading && (
+        <p className="mt-1 text-xs text-muted">{progress}</p>
+      )}
     </div>
   );
 }

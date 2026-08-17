@@ -12,7 +12,7 @@ const nextConfig: NextConfig = {
   experimental: {
     // زيادة حد حجم Body لـ Server Actions (للصور والملفات)
     serverActions: {
-      bodySizeLimit: "5mb",
+      bodySizeLimit: "100mb",
     },
   },
   images: {

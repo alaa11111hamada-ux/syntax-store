@@ -160,15 +160,27 @@ async function parseProductForm(
   // الوسوم
   const tags = parseJsonArray(formData.get("tags"));
 
-  // الصور: رابط لكل سطر + صور مرفوعة (اختياري)
+  // الصور: رابط لكل سطر + صور مرفوعة من المتصفح مباشرة
   const urls = cleanStr(formData.get("imageUrls"), 4000)
     .split(/\r?\n/)
     .map((s) => s.trim())
     .filter(Boolean);
 
-  const images: string[] = [];
-  const uploadedImages = formData.getAll("images");
-  for (const img of uploadedImages) {
+  const images: string[] = [...urls];
+
+  // صور مرفوعة مباشرة من المتصفح (كلها URLs)
+  const uploadedImagesRaw = cleanStr(formData.get("images"), 4000);
+  if (uploadedImagesRaw) {
+    const uploadedUrls = uploadedImagesRaw
+      .split(/\n/)
+      .map((s) => s.trim())
+      .filter((s) => s.startsWith("http"));
+    images.push(...uploadedUrls);
+  }
+
+  // صور مرسلة كـ File objects (الحالة القديمة)
+  const uploadedFiles = formData.getAll("images");
+  for (const img of uploadedFiles) {
     if (img instanceof File && img.size > 0) {
       try {
         images.push(await saveImage(img, "products"));
@@ -177,17 +189,24 @@ async function parseProductForm(
       }
     }
   }
-  images.push(...urls);
 
   // الملف الرقمي الرئيسي
   let fileUrl = cleanStr(formData.get("fileUrl"), 500) || null;
   const fileName = cleanStr(formData.get("fileName"), 200) || "";
-  const digitalFile = formData.get("file");
-  if (digitalFile instanceof File && digitalFile.size > 0) {
-    try {
-      fileUrl = await saveDigitalFile(digitalFile);
-    } catch (e) {
-      return { error: e instanceof Error ? e.message : "فشل رفع الملف." };
+
+  // الحالة الجديدة: الملف اترفع مباشرة من المتصفح لـ Supabase Storage
+  const fileValue = cleanStr(formData.get("file"), 500);
+  if (fileValue && fileValue.startsWith("http")) {
+    fileUrl = fileValue;
+  } else {
+    // الحالة القديمة: الملف مرسل كـ File object من السيرفر
+    const digitalFile = formData.get("file");
+    if (digitalFile instanceof File && digitalFile.size > 0) {
+      try {
+        fileUrl = await saveDigitalFile(digitalFile);
+      } catch (e) {
+        return { error: e instanceof Error ? e.message : "فشل رفع الملف." };
+      }
     }
   }
 
@@ -196,9 +215,9 @@ async function parseProductForm(
 
   // إصدار الملف — يزيد تلقائيًّا لو الملف الرئيسي اتغيّر
   let version = parseInt(cleanStr(formData.get("version"), 10), 10) || 1;
-  if (digitalFile instanceof File && digitalFile.size > 0 && exceptId) {
-    const existing = await prisma.product.findUnique({ where: { id: exceptId }, select: { version: true } });
-    if (existing) version = existing.version + 1;
+  if (fileUrl && exceptId) {
+    const existing = await prisma.product.findUnique({ where: { id: exceptId }, select: { version: true, fileUrl: true } });
+    if (existing && existing.fileUrl !== fileUrl) version = existing.version + 1;
   }
 
   // حد أقصى للتحميل
