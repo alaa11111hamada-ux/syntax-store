@@ -1,5 +1,5 @@
 import "server-only";
-import { supabaseStorage } from "@/lib/supabase-storage";
+import { getSupabaseStorage } from "@/lib/supabase-storage";
 
 const ALLOWED_IMAGE = ["image/jpeg", "image/png", "image/webp"];
 const DEFAULT_MAX = 5 * 1024 * 1024; // 5MB
@@ -40,6 +40,8 @@ export async function saveImage(
     throw new Error("الملف مش صورة حقيقية — تحقق من المحتوى.");
   }
 
+  const supabaseStorage = getSupabaseStorage();
+
   const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
   const filename = `${subdir}/${Date.now()}-${randomId()}.${ext}`;
   const bytes = new Uint8Array(await file.arrayBuffer());
@@ -59,6 +61,8 @@ export async function saveDigitalFile(file: File): Promise<string> {
   if (file.size > 100 * 1024 * 1024) {
     throw new Error("حجم الملف كبير (الحد الأقصى 100 ميجا).");
   }
+
+  const supabaseStorage = getSupabaseStorage();
   const ext = file.name.split(".").pop() || "bin";
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 60);
   const filename = `files/${Date.now()}-${randomId()}-${safeName}`;
