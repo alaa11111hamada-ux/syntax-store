@@ -124,7 +124,10 @@ export default async function SiteFooter() {
 
         {/*	Copyright */}
         <div className="mt-8 border-t border-line pt-6 text-center text-xs text-muted">
-          © {year} {storeName}. جميع الحقوق محفوظة.
+          © {year} {storeName}. جميع الحقوق محفوظة.{" "}
+          <Link href="/privacy" className="hover:text-brand-300">سياسة الخصوصية</Link>
+          {" · "}
+          <Link href="/terms" className="hover:text-brand-300">شروط الاستخدام</Link>
         </div>
       </div>
     </footer>

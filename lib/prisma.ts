@@ -1,6 +1,10 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
+import dns from "node:dns";
+
+// Force Node.js to prefer IPv4 globally
+dns.setDefaultResultOrder("ipv4first");
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -13,7 +17,7 @@ function createClient(): PrismaClient {
   }
   const pool = new Pool({
     connectionString: url,
-    family: 4, // Force IPv4 — Vercel can't reach Supabase via IPv6
+    family: 4,
   });
   const adapter = new PrismaPg(pool);
   return new PrismaClient({
