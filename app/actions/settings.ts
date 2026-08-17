@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -14,11 +13,7 @@ function toggle(formData: FormData, name: string): string {
 }
 
 export async function saveSettingsAllAction(formData: FormData): Promise<void> {
-  try {
-    await requireAdmin();
-  } catch {
-    throw new Error("غير مصرّح لك بتعديل الإعدادات.");
-  }
+  const user = await requireAdmin();
 
   const bumpEnabled = toggle(formData, "bump_enabled");
   const bumpProductId = cleanStr(formData.get("bump_product_id"), 40);
@@ -92,7 +87,6 @@ export async function saveSettingsAllAction(formData: FormData): Promise<void> {
   });
 }
 
-// ═══ الحفظ القديم (محتفظين بيه للتوافق مع الكود الحالي) ═══
 export async function saveSettingsAction(
   _prev: SettingsFormState,
   formData: FormData

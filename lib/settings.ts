@@ -94,21 +94,41 @@ export async function getSettings(): Promise<Record<SettingKey, string>> {
   return out;
 }
 
-/** حفظ مجموعة إعدادات دفعة واحدة (upsert لكل مفتاح) */
+/** حفظ مجموعة إعدادات دفعة واحدة — batch واحد بالـ SQL عشان نتفادى timeout */
 export async function saveSettings(
   values: Partial<Record<SettingKey, string>>
 ): Promise<void> {
-  const ops = Object.entries(values)
-    .filter(([k]) => (SETTING_KEYS as readonly string[]).includes(k))
-    .map(([key, value]) =>
-      prisma.setting.upsert({
-        where: { key },
-        update: { value: value ?? "" },
-        create: { key, value: value ?? "" },
-      })
-    );
-  await prisma.$transaction(ops);
-  settingsCache = null; // مسح الكاش بعد الحفظ
+  const entries = Object.entries(values).filter(([k]) =>
+    (SETTING_KEYS as readonly string[]).includes(k)
+  );
+  if (entries.length === 0) return;
+
+  const chunks: string[][] = [];
+  for (let i = 0; i < entries.length; i += 10) {
+    chunks.push(entries.slice(i, i + 10));
+  }
+
+  for (const chunk of chunks) {
+    const valuesClauses: string[] = [];
+    const flatValues: string[] = [];
+    let paramIdx = 1;
+
+    for (const [key, value] of chunk) {
+      valuesClauses.push(`($${paramIdx}, $${paramIdx + 1}, now())`);
+      flatValues.push(key, value ?? "");
+      paramIdx += 2;
+    }
+
+    const sql = `
+      INSERT INTO "Setting" ("key", "value", "updatedAt")
+      VALUES ${valuesClauses.join(", ")}
+      ON CONFLICT ("key") DO UPDATE SET "value" = EXCLUDED."value", "updatedAt" = now()
+    `;
+
+    await prisma.$executeRawUnsafe(sql, ...flatValues);
+  }
+
+  settingsCache = null;
 }
 
 /** هل الإعداد مفعّل؟ ("1" = مفعّل) */
