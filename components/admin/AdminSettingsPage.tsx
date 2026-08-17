@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useTransition } from "react";
-import { useRouter } from "next/navigation";
 
 type Settings = Record<string, string>;
 
@@ -454,15 +453,14 @@ export default function AdminSettingsPage({ settings, products, onSave }: Props)
   const [isPending, startTransition] = useTransition();
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
-  const router = useRouter();
 
   const handleSubmit = (formData: FormData) => {
     setMsg(null);
     startTransition(async () => {
       try {
         await onSave(formData);
-        router.refresh();
-        setMsg({ type: "ok", text: "تم حفظ الإعدادات بنجاح — التغييرات شغّالة على المتجر فورًا." });
+        setMsg({ type: "ok", text: "تم حفظ الإعدادات بنجاح — بتحديث الصفحة..." });
+        setTimeout(() => { window.location.href = "/admin/settings"; }, 600);
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : "حصلت مشكلة أثناء الحفظ.";
         setMsg({ type: "err", text: msg });
