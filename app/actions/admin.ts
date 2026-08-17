@@ -247,31 +247,41 @@ export async function createProductAction(
   _prev: ProductFormState,
   formData: FormData
 ): Promise<ProductFormState> {
-  const admin = await requireAdmin();
-  const { data, error } = await parseProductForm(formData);
-  if (error || !data) return { error };
-  const product = await createProduct(data);
-  await logAudit(admin.id, "create", "product", product.id, { name: data.name });
-  revalidatePath("/admin/products");
-  revalidatePath("/");
-  redirect("/admin/products");
+  try {
+    const admin = await requireAdmin();
+    const { data, error } = await parseProductForm(formData);
+    if (error || !data) return { error };
+    const product = await createProduct(data);
+    await logAudit(admin.id, "create", "product", product.id, { name: data.name });
+    revalidatePath("/admin/products");
+    revalidatePath("/");
+    redirect("/admin/products");
+  } catch (e: unknown) {
+    if (typeof e === "object" && e !== null && "digest" in e) throw e;
+    return { error: e instanceof Error ? e.message : "حدث خطأ غير متوقع" };
+  }
 }
 
 export async function updateProductAction(
   _prev: ProductFormState,
   formData: FormData
 ): Promise<ProductFormState> {
-  const admin = await requireAdmin();
-  const id = cleanStr(formData.get("id"), 40);
-  if (!id) return { error: "منتج غير معروف." };
-  const { data, error } = await parseProductForm(formData, id);
-  if (error || !data) return { error };
-  await updateProduct(id, data);
-  await logAudit(admin.id, "update", "product", id, { name: data.name });
-  revalidatePath("/admin/products");
-  revalidatePath(`/products/${data.slug}`);
-  revalidatePath("/");
-  redirect("/admin/products");
+  try {
+    const admin = await requireAdmin();
+    const id = cleanStr(formData.get("id"), 40);
+    if (!id) return { error: "منتج غير معروف." };
+    const { data, error } = await parseProductForm(formData, id);
+    if (error || !data) return { error };
+    await updateProduct(id, data);
+    await logAudit(admin.id, "update", "product", id, { name: data.name });
+    revalidatePath("/admin/products");
+    revalidatePath(`/products/${data.slug}`);
+    revalidatePath("/");
+    redirect("/admin/products");
+  } catch (e: unknown) {
+    if (typeof e === "object" && e !== null && "digest" in e) throw e;
+    return { error: e instanceof Error ? e.message : "حدث خطأ غير متوقع" };
+  }
 }
 
 export async function deleteProductAction(formData: FormData): Promise<void> {
