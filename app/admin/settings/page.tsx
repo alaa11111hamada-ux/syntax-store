@@ -11,7 +11,7 @@ export default async function AdminSettingsPageWrapper() {
   let products: { id: string; name: string; priceLabel: string }[] = [];
 
   const [settings, rawProducts] = await Promise.all([
-    getSettings(),
+    getSettings().catch(() => ({} as Record<string, string>)),
     prisma.product.findMany({
       where: { active: true },
       select: { id: true, name: true, priceCents: true, currency: true },

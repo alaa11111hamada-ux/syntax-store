@@ -16,10 +16,7 @@ export default async function AdminLayout({
 
   return (
     <div className="flex min-h-screen">
-      {/* القائمة الجانبية — بطول الشاشة */}
       <AdminSidebar adminName={admin.name} permissions={admin.permissions} role={admin.role} />
-
-      {/* المحتوى */}
       <div className="flex-1 min-w-0">
         <div className="mx-auto max-w-6xl px-4 py-6">
           {children}

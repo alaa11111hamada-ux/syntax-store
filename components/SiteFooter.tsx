@@ -5,7 +5,12 @@ import { getSettings } from "@/lib/settings";
 
 export default async function SiteFooter() {
   const year = new Date().getFullYear();
-  const settings = await getSettings();
+  let settings;
+  try {
+    settings = await getSettings();
+  } catch {
+    settings = {} as Record<string, string>;
+  }
 
   const footerText = settings.footer_text || settings.store_description || site.description;
 

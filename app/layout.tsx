@@ -20,7 +20,12 @@ const cairo = Cairo({
 });
 
 export async function generateMetadata(): Promise<Metadata> {
-  const settings = await getSettings();
+  let settings;
+  try {
+    settings = await getSettings();
+  } catch {
+    settings = {} as Record<string, string>;
+  }
   const name = settings.store_name || site.name;
   const desc = settings.store_description || site.description;
   return {
@@ -70,7 +75,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const settings = await getSettings();
+  const settings = await getSettings().catch(() => ({} as Record<string, string>));
   const themeScript = buildThemeScript(settings);
   const description = settings.store_description || site.description;
 

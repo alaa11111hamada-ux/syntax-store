@@ -15,7 +15,12 @@ async function getPixelsCached() {
 }
 
 export default async function TrackingPixels() {
-  const px = await getPixelsCached();
+  let px;
+  try {
+    px = await getPixelsCached();
+  } catch {
+    return null;
+  }
   const none = !px.metaPixelId && !px.tiktokPixelId && !px.gaMeasurementId && !px.snapPixelId;
   if (none) return null;
 

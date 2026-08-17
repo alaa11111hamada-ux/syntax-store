@@ -106,7 +106,8 @@ export async function saveSettingsAllAction(formData: FormData): Promise<void> {
       maxAge: maintenanceVal ? 60 * 60 * 24 * 30 : 0,
     });
 
-    revalidatePath("/", "layout");
+    revalidatePath("/admin/settings");
+    revalidatePath("/");
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "حدث خطأ غير متوقع";
     throw new Error(`❌ ${msg}`);

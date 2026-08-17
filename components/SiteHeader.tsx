@@ -9,7 +9,12 @@ import ThemeToggle from "./ThemeToggle";
 import { Heart } from "lucide-react";
 
 export default async function SiteHeader() {
-  const user = await getCurrentUser();
+  let user = null;
+  try {
+    user = await getCurrentUser();
+  } catch {
+    user = null;
+  }
 
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-bg/80 backdrop-blur">
