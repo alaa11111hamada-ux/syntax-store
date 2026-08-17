@@ -228,6 +228,7 @@ export default function CheckoutMultiStep({
       <form
         ref={formRef}
         action={formAction}
+        noValidate
         className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]"
       >
         {/* حقول مخفية */}

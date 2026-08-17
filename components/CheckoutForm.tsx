@@ -43,7 +43,7 @@ export default function CheckoutForm({ user, bump, bumpChecked, onBumpChange }: 
   }, [state, clear, router]);
 
   return (
-    <form action={formAction} className="flex flex-col gap-6">
+    <form action={formAction} noValidate className="flex flex-col gap-6">
       <input type="hidden" name="items" value={itemsJson} />
 
       {/* بيانات العميل */}

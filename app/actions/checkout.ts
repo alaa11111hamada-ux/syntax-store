@@ -1,7 +1,5 @@
 "use server";
 
-import { writeFile, mkdir } from "node:fs/promises";
-import path from "node:path";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, hashPassword, createSession } from "@/lib/auth";
 import { createOrder, type NewOrderItem } from "@/lib/orders";
@@ -10,6 +8,7 @@ import { site } from "@/lib/site";
 import { validateCoupon, useCoupon } from "@/lib/coupons";
 import { isValidEmail, isValidPhone, cleanStr } from "@/lib/validation";
 import { checkCheckoutRate } from "@/lib/rate-limit";
+import { saveImage } from "@/lib/upload";
 
 
 export type CheckoutState = {
@@ -17,9 +16,6 @@ export type CheckoutState = {
   ok?: boolean;
   orderNumber?: string;
 };
-
-const MAX_PROOF_BYTES = 5 * 1024 * 1024; // 5MB
-const ALLOWED_IMAGE = ["image/jpeg", "image/png", "image/webp"];
 
 type CartLine = { productId: string; qty: number };
 
@@ -39,22 +35,7 @@ function parseCart(raw: string): CartLine[] {
 }
 
 async function saveProof(file: File): Promise<string> {
-  if (!ALLOWED_IMAGE.includes(file.type)) {
-    throw new Error("صورة الإثبات لازم تكون JPG أو PNG أو WEBP.");
-  }
-  if (file.size > MAX_PROOF_BYTES) {
-    throw new Error("حجم الصورة كبير (الحد الأقصى 5 ميجا).");
-  }
-  const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
-  const rand = Array.from({ length: 20 }, () =>
-    "abcdefghijklmnopqrstuvwxyz0123456789"[Math.floor(Math.random() * 36)]
-  ).join("");
-  const filename = `${Date.now()}-${rand}.${ext}`;
-  const dir = path.join(process.cwd(), "public", "uploads", "proofs");
-  await mkdir(dir, { recursive: true });
-  const bytes = Buffer.from(await file.arrayBuffer());
-  await writeFile(path.join(dir, filename), bytes);
-  return `/uploads/proofs/${filename}`;
+  return saveImage(file, "proofs");
 }
 
 export async function placeOrderAction(

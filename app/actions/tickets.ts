@@ -2,11 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { writeFile, mkdir } from "node:fs/promises";
-import path from "node:path";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { cleanStr } from "@/lib/validation";
+import { saveImage } from "@/lib/upload";
 
 export type TicketState = { error?: string; ok?: boolean };
 
@@ -73,19 +72,11 @@ export async function replyTicketAction(
 
   let attachmentUrl: string | null = null;
   if (attachment && attachment.size > 0) {
-    if (attachment.size > 5 * 1024 * 1024) {
-      return { error: "حجم الصورة كبير (الحد الأقصى 5 ميجا)." };
+    try {
+      attachmentUrl = await saveImage(attachment, "tickets");
+    } catch (e) {
+      return { error: e instanceof Error ? e.message : "فشل رفع المرفق." };
     }
-    const ext = attachment.name.split(".").pop() || "jpg";
-    const rand = Array.from({ length: 16 }, () =>
-      "abcdefghijklmnopqrstuvwxyz0123456789"[Math.floor(Math.random() * 36)]
-    ).join("");
-    const filename = `ticket-${Date.now()}-${rand}.${ext}`;
-    const dir = path.join(process.cwd(), "public", "uploads", "tickets");
-    await mkdir(dir, { recursive: true });
-    const bytes = Buffer.from(await attachment.arrayBuffer());
-    await writeFile(path.join(dir, filename), bytes);
-    attachmentUrl = `/uploads/tickets/${filename}`;
   }
 
   await prisma.ticketMessage.create({
