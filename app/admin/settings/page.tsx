@@ -8,23 +8,27 @@ export const metadata = { title: "الإعدادات" };
 export const dynamic = "force-dynamic";
 
 export default async function AdminSettingsPageWrapper() {
-  const [settings, products] = await Promise.all([
+  let products: { id: string; name: string; priceLabel: string }[] = [];
+
+  const [settings, rawProducts] = await Promise.all([
     getSettings(),
     prisma.product.findMany({
       where: { active: true },
       select: { id: true, name: true, priceCents: true, currency: true },
       orderBy: { name: "asc" },
-    }),
+    }).catch(() => []),
   ]);
+
+  products = rawProducts.map((p) => ({
+    id: p.id,
+    name: p.name,
+    priceLabel: formatPrice(p.priceCents, p.currency),
+  }));
 
   return (
     <AdminSettingsPage
       settings={settings}
-      products={products.map((p) => ({
-        id: p.id,
-        name: p.name,
-        priceLabel: formatPrice(p.priceCents, p.currency),
-      }))}
+      products={products}
       onSave={saveSettingsAllAction}
     />
   );
